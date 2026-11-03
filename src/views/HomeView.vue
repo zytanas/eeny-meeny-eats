@@ -13,6 +13,7 @@ import pizzaSvg from '@/assets/stickers/pizza.svg'
 import friesSvg from '@/assets/stickers/fries.svg'
 import hotdogSvg from '@/assets/stickers/hotdog.svg'
 import burgerSvg from '@/assets/stickers/burger.svg'
+import sandwichSvg from '@/assets/stickers/sandwich.svg'
 import pinSvg from '@/assets/stickers/pin.svg'
 import mapSvg from '@/assets/stickers/map.svg'
 import slotSvg from '@/assets/stickers/slot.svg'
@@ -76,6 +77,7 @@ const stickers = [
   { name: 'burger', src: burgerSvg },
   { name: 'soda', src: sodaSvg },
   { name: 'hotdog', src: hotdogSvg },
+  { name: 'sandwich', src: sandwichSvg },
   { name: 'coffee', src: coffeeSvg },
   { name: 'ramen', src: ramenSvg },
 ]
@@ -466,25 +468,62 @@ function continueToLocation() {
     bob 3.4s ease-in-out infinite;
 }
 
-/* Phones: four small stickers tucked into the corners, bleeding off the edges */
-.food-sticker--chicken  { --w: clamp(64px, 19vw, 104px); --rot: -12deg; top: 1.5%;  left: -3%;  animation-delay: 1.6s, 2s; }
-.food-sticker--pizza    { --w: clamp(60px, 18vw, 96px);  --rot: 11deg;  top: 2%;    right: -3%; animation-delay: 1.7s, 2.6s; }
-.food-sticker--fries    { --w: clamp(56px, 16vw, 88px);  --rot: 8deg;   bottom: 2%; left: -2%;  animation-delay: 1.8s, 3.1s; }
-.food-sticker--burger   { --w: clamp(64px, 19vw, 104px); --rot: -9deg;  bottom: 1.5%; right: -3%; animation-delay: 1.9s, 2.3s; }
-.food-sticker--soda,
-.food-sticker--hotdog,
+/* Rotation and timing are shared by every screen size */
+.food-sticker--chicken  { --rot: -12deg; animation-delay: 1.6s, 2s; }
+.food-sticker--pizza    { --rot: 11deg;  animation-delay: 1.7s, 2.6s; }
+.food-sticker--fries    { --rot: 8deg;   animation-delay: 1.8s, 3.1s; }
+.food-sticker--burger   { --rot: -9deg;  animation-delay: 1.9s, 2.3s; }
+.food-sticker--soda     { --rot: 7deg;   animation-delay: 2s, 2.9s; }
+.food-sticker--hotdog   { --rot: -14deg; animation-delay: 2.1s, 1.7s; }
+.food-sticker--sandwich { --rot: 5deg;   animation-delay: 2.2s, 3.3s; }
 .food-sticker--coffee,
 .food-sticker--ramen { display: none; }
 
-/* Tablets: bigger, with soda and hot dog joining on the sides */
-@media (min-width: 640px) {
+/* Phones and tablets: seven big stickers filling the zones above and below the
+   headline group, bleeding off the sides. Each one sets --bleed, the share of its
+   width pushed past the edge. Padding keeps those zones clear of the text, so the
+   stickers only ever brush the text block's outer edges (and sit behind it).
+   The bottom zone is always at least as tall as the sandwich (the drawing fills
+   about 80% of its width in height), so it can't reach the button or scroll hint. */
+@media (max-width: 1023.98px) {
+  .intro {
+    --zone: clamp(4.5rem, 12dvh, 7rem);
+    --sandwich-w: clamp(96px, 28vw, 118px);
+    justify-content: center;
+    padding-top: var(--zone);
+    padding-bottom: calc(max(var(--zone), var(--sandwich-w) * 0.8 + 1rem) + env(safe-area-inset-bottom));
+  }
+
+  /* Centered as one group with the scroll hint tucked right under the button,
+     so the sandwich below never covers it */
+  .intro-content { margin: 0 auto; }
+
+  .food-sticker--chicken  { --w: clamp(120px, 36vw, 150px); --bleed: 0.3;  top: 0.25rem; left: calc(var(--w) * var(--bleed) * -1); }
+  .food-sticker--pizza    { --w: clamp(112px, 33vw, 140px); --bleed: 0.3;  top: 0.5rem;  right: calc(var(--w) * var(--bleed) * -1); }
+  /* The headline group is centered, so the side pair is placed from the center line:
+     soda beside the headline, hot dog beside the "Sound familiar?" badge */
+  .food-sticker--soda     { --w: clamp(88px, 26vw, 110px);  --bleed: 0.5;  top: max(calc(50% - 11rem), 8.5rem); left: calc(var(--w) * var(--bleed) * -1); }
+  .food-sticker--hotdog   { --w: clamp(88px, 26vw, 110px);  --bleed: 0.5;  top: max(calc(50% - 7rem), 10rem); right: calc(var(--w) * var(--bleed) * -1); }
+  .food-sticker--fries    { --w: clamp(112px, 33vw, 140px); --bleed: 0.3;  bottom: 0.5rem; left: calc(var(--w) * var(--bleed) * -1); }
+  .food-sticker--burger   { --w: clamp(130px, 38vw, 160px); --bleed: 0.3;  bottom: 0;    right: calc(var(--w) * var(--bleed) * -1); }
+  .food-sticker--sandwich { --w: var(--sandwich-w); bottom: 0.25rem; left: calc(50% - var(--w) / 2); }
+}
+
+/* Tablets: same arrangement, bigger and less bleed. Soda and hot dog hug the
+   headline at mid-height. */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  /* Landscape tablets are short, so the sandwich also shrinks with the height */
+  .intro {
+    --zone: clamp(4.5rem, 12dvh, 9rem);
+    --sandwich-w: clamp(140px, min(18vw, 18dvh), 165px);
+  }
   .food-sticker { --shadow-off: 5px; }
-  .food-sticker--chicken  { --w: clamp(110px, 15vw, 150px); top: 4%;  left: 2%; }
-  .food-sticker--pizza    { --w: clamp(100px, 14vw, 140px); top: 5%;  right: 2%; }
-  .food-sticker--fries    { --w: clamp(92px, 12vw, 124px);  bottom: 6%; left: 3%; }
-  .food-sticker--burger   { --w: clamp(110px, 15vw, 150px); bottom: 5%; right: 2%; }
-  .food-sticker--soda     { --w: clamp(80px, 10vw, 104px);  --rot: 7deg;  display: block; top: 42%; left: -3%;  animation-delay: 2s, 2.9s; }
-  .food-sticker--hotdog   { --w: clamp(84px, 11vw, 112px);  --rot: -14deg; display: block; top: 50%; right: -3%; animation-delay: 2.1s, 1.7s; }
+  .food-sticker--chicken  { --w: clamp(170px, 22vw, 190px); --bleed: 0.22; }
+  .food-sticker--pizza    { --w: clamp(160px, 21vw, 180px); --bleed: 0.22; }
+  .food-sticker--soda     { --w: clamp(150px, 18vw, 165px); --bleed: 0.22; top: max(calc(50% - 16rem), 12.5rem); }
+  .food-sticker--hotdog   { --w: clamp(150px, 18vw, 165px); --bleed: 0.22; top: max(calc(50% - 12rem), 14rem); }
+  .food-sticker--fries    { --w: clamp(160px, 20vw, 175px); --bleed: 0.2; }
+  .food-sticker--burger   { --w: clamp(170px, 22vw, 190px); --bleed: 0.22; }
 }
 
 /* Desktop: all eight, with room to roam on the sides */
@@ -498,6 +537,7 @@ function continueToLocation() {
   .food-sticker--hotdog   { --w: clamp(110px, 9.5vw, 160px); top: 40%; right: 1%; }
   .food-sticker--coffee   { --w: clamp(110px, 9vw, 150px);  --rot: 4deg;  display: block; bottom: 3%; left: 22%;  animation-delay: 2.2s, 2.4s; }
   .food-sticker--ramen    { --w: clamp(120px, 10vw, 170px); --rot: -6deg; display: block; bottom: 3%; right: 22%; animation-delay: 2.3s, 2.8s; }
+  .food-sticker--sandwich { display: none; } /* coffee and ramen take the bottom row here */
 }
 
 /* ---------- Location step ---------- */
