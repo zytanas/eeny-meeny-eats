@@ -1,0 +1,417 @@
+/* Global styles, mobile-first. Larger breakpoints are added with min-width queries.
+
+   Breakpoints (also in src/utils/breakpoints.js; use these exact numbers everywhere):
+     mobile         < 640px    default styles, no media query
+     tablet         >= 640px   @media (min-width: 640px)
+     desktop        >= 1024px  @media (min-width: 1024px)
+     large desktop  >= 1440px  @media (min-width: 1440px)
+
+   Sizes that can scale smoothly (type, spacing, gutters) use clamp() rather than
+   jumping at a breakpoint. Breakpoints are for layout changes. */
+
+/* ==========================================================================
+   Design tokens: change these to re-skin the whole app
+   ========================================================================== */
+
+/* Contrast notes (WCAG 2.1 AA):
+   - Ink on orange is ~5.9:1, so text on orange is always ink, never white.
+   - White/cream on orange is only ~2.9:1, so avoid it.
+   - Bright orange is too light for text on cream; use --orange-deep (~5.2:1)
+     for orange-coloured text and links. */
+:root {
+  /* Palette: bright orange on warm cream, ink black, one accent */
+  --orange: #ff5a1f;
+  --orange-deep: #b83a00;
+  --cream: #fff3df;
+  --ink: #141414;
+  --accent: #ffd23f; /* sunny yellow: stars, badges, highlights */
+  --paper: #fffdf8; /* card surface, a touch lighter than the page */
+  --leaf: #157a35; /* "open now" status text only */
+  --stone: #8a8378; /* closed places on the map */
+
+  /* Semantic roles (components use these, not the raw palette) */
+  --color-primary: var(--orange);
+  --color-primary-hover: #ff7440;
+  --color-on-primary: var(--ink);
+  --color-highlight: var(--accent);
+  --color-accent: var(--accent);
+  --color-text: var(--ink);
+  --color-link: var(--orange-deep);
+  --color-muted: #57514a;
+  --color-bg: var(--cream);
+  --color-surface: var(--paper);
+  --color-border: var(--ink);
+  --color-success: var(--leaf);
+  --color-danger: var(--orange-deep);
+  --color-star: var(--accent);
+  --color-closed: var(--stone);
+  --color-focus: var(--ink);
+
+  /* Type: tall condensed display + clean sans body */
+  --font-display: 'Anton', 'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
+  --font-body: 'DM Sans Variable', 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Sticker look: thick outlines, hard shadows, round corners */
+  --outline-w: 3px;
+  --outline-w-thick: 4px;
+  --outline: var(--outline-w) solid var(--ink);
+  --outline-thick: var(--outline-w-thick) solid var(--ink);
+  --shadow-sm: 3px 3px 0 var(--ink);
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-lg: 8px 8px 0 var(--ink);
+  --radius-sm: 12px;
+  --radius: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+
+  /* Motion: UI feedback stays under 400ms */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-press: 80ms;
+  --dur-fast: 180ms;
+  --dur-pop: 320ms;
+  --marquee-speed: 24s; /* one full loop of a ticker */
+
+  /* Fluid type: scales smoothly from a 360px phone to a 1440px desktop */
+  --text-sm: clamp(0.85rem, 0.82rem + 0.15vw, 0.95rem);
+  --text-base: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  --text-lg: clamp(1.15rem, 1.05rem + 0.45vw, 1.4rem);
+  --text-btn-display: clamp(1.15rem, 1.05rem + 0.45vw, 1.4rem);
+
+  /* Layout */
+  --gutter: clamp(16px, 10px + 1.5vw, 28px);
+  --header-height: clamp(56px, 50px + 1vw, 64px);
+  --header-total: calc(var(--header-height) + env(safe-area-inset-top)); /* incl. the notch */
+  --tap-min: 40px; /* smallest control height; 44px on touch screens (below) */
+
+  /* Horizontal padding that also clears a notch in landscape */
+  --pad-left: max(var(--gutter), env(safe-area-inset-left));
+  --pad-right: max(var(--gutter), env(safe-area-inset-right));
+
+  font-family: var(--font-body);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Touch screens: every tap target at least 44px tall */
+@media (pointer: coarse) {
+  :root {
+    --tap-min: 44px;
+  }
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--color-bg);
+}
+
+#app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* Safety net against sideways scrolling (tilted tickers, shadows). `clip`, unlike
+     `hidden`, doesn't create a scroll container, so sticky elements keep working. */
+  overflow-x: clip;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400; /* Anton is already heavy */
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.5rem;
+}
+
+a {
+  color: var(--color-link);
+  font-weight: 700;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* Visible keyboard focus everywhere: a thick ink ring offset from the element,
+   readable on cream, paper, orange and yellow alike */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Buttons: chunky stickers that squish into their shadow when tapped
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px; /* comfortable touch target */
+  padding: 0 clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  border: var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-sm);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--dur-press) ease-out,
+    box-shadow var(--dur-press) ease-out,
+    background-color var(--dur-fast);
+}
+
+/* Press feedback: the sticker drops into its shadow and squishes a little */
+.btn:active:not(:disabled) {
+  transform: translate(3px, 3px) scale(0.97, 0.94);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Solid orange with ink text (see contrast notes above) */
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-highlight {
+  background: var(--color-highlight);
+  color: var(--ink);
+}
+
+.btn-highlight:not(:disabled):hover {
+  background: #ffdd6b;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btn-secondary:not(:disabled):hover {
+  background: var(--cream);
+}
+
+/* Ink button with cream text, for use on orange backgrounds */
+.btn-ink {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.btn-ink:not(:disabled):hover {
+  background: #2e2e2e;
+}
+
+/* Big display-type buttons for the main calls to action */
+.btn-display {
+  min-height: 56px;
+  font-family: var(--font-display);
+  font-size: var(--text-btn-display);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Tall, uppercase display headline */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Sticker card surface */
+.sticker {
+  background: var(--color-surface);
+  border: var(--outline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+.container {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--gutter) var(--pad-right) var(--gutter) var(--pad-left);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.error {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Leaflet overrides
+   ========================================================================== */
+
+/* Bigger zoom buttons on touch screens */
+@media (pointer: coarse) {
+  .leaflet-touch .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 22px;
+  }
+}
+
+/* Attribution wraps instead of overflowing on narrow maps */
+.leaflet-container .leaflet-control-attribution {
+  max-width: calc(100% - 16px);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   Shared <Transition> classes
+   ========================================================================== */
+
+/* Route changes (App.vue) */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.page-leave-to {
+  opacity: 0;
+}
+
+/* Panels that drop open (filters) */
+.drop-enter-active,
+.drop-leave-active {
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+  transform-origin: top center;
+}
+.drop-enter-from,
+.drop-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+/* Bouncy pop in/out (randomizer stages) */
+.pop-enter-active {
+  transition:
+    opacity 0.2s ease-out,
+    transform var(--dur-pop) var(--ease-pop);
+}
+.pop-leave-active {
+  transition:
+    opacity 0.15s ease-in,
+    transform 0.15s ease-in;
+}
+.pop-enter-from {
+  opacity: 0;
+  transform: scale(0.6) rotate(-4deg);
+}
+.pop-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* List filtering (Explore): subtle so the list stays easy to scan */
+.list-enter-active,
+.list-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.list-move {
+  transition: transform 0.25s var(--ease-out);
+}
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+.list-leave-active {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* Quick fade (status text, swaps) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ==========================================================================
+   Reduced motion: switch off every CSS animation and transition app-wide.
+   (JS-driven effects, GSAP and confetti, check prefersReducedMotion() too.
+   Marquee tickers set `animation: none` themselves so they stay put.)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

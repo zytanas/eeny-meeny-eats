@@ -1,0 +1,29 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Local development: `netlify dev` starts Vite and proxies it on :8888,
+# serving the functions alongside the frontend.
+[dev]
+  framework = "#custom"
+  command = "npm run dev"
+  targetPort = 5173
+  port = 8888
+
+# Friendly API path: /api/nearby -> /.netlify/functions/nearby
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+# SPA fallback so Vue Router routes (e.g. /explore, /place/123) work on refresh.
+# Must come after the /api redirect.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
