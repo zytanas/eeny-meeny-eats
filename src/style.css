@@ -13,39 +13,37 @@
    Design tokens: change these to re-skin the whole app
    ========================================================================== */
 
-/* Contrast notes (WCAG 2.1 AA):
-   - Ink on orange is ~5.9:1, so text on orange is always ink, never white.
-   - White/cream on orange is only ~2.9:1, so avoid it.
-   - Bright orange is too light for text on cream; use --orange-deep (~5.2:1)
-     for orange-coloured text and links. */
+/* Contrast notes (WCAG 2.1 AA), "Sorbetes" palette:
+   - Ink is >= 10:1 on bg, hero, card and accent, so it's safe for any text.
+   - Ink on --color-primary is 4.56:1. Pink fills can carry ink text, never white
+     (white on primary is only ~3.1:1).
+   - Buttons with white text use --color-primary-strong (4.94:1).
+   - --color-primary-strong is also the pink for text and links on bg/card (>= 4.7:1).
+   - --color-muted is >= 4.6:1 on bg, hero, card and accent.
+   - --color-primary is ~3:1 against bg, so pink shapes always get an ink outline. */
 :root {
-  /* Palette: bright orange on warm cream, ink black, one accent */
-  --orange: #ff5a1f;
-  --orange-deep: #b83a00;
-  --cream: #fff3df;
-  --ink: #141414;
-  --accent: #ffd23f; /* sunny yellow: stars, badges, highlights */
-  --paper: #fffdf8; /* card surface, a touch lighter than the page */
-  --leaf: #157a35; /* "open now" status text only */
-  --stone: #8a8378; /* closed places on the map */
+  /* Palette: strawberry and mango on warm cream, chocolate ink */
+  --color-bg: #fff9f4; /* warm cream page background */
+  --color-hero: #ffe3e8; /* soft strawberry, intro hero */
+  --color-hero-dot: #f7c4cf; /* hero halftone dots, low contrast on --color-hero */
+  --color-ink: #3a2621; /* chocolate: text, outlines, hard shadows */
+  --color-primary: #ea6686; /* strawberry: decorative fills, markers, highlights */
+  --color-primary-strong: #c93a5e; /* buttons with white text, pink text and links */
+  --color-primary-strong-hover: #b02f50;
+  --color-on-primary: #ffffff; /* text on --color-primary-strong */
+  --color-accent: #ffd56b; /* mango: art areas, selected chips, small highlights */
+  --color-accent-hover: #ffdf8a;
+  --color-card: #ffffff; /* cards and panels */
+  --color-muted: #6f5955; /* secondary text, placeholders, metadata */
+  --color-success: #237a4b; /* "open now" */
+  --color-rating: #9a6212; /* star ratings */
 
-  /* Semantic roles (components use these, not the raw palette) */
-  --color-primary: var(--orange);
-  --color-primary-hover: #ff7440;
-  --color-on-primary: var(--ink);
-  --color-highlight: var(--accent);
-  --color-accent: var(--accent);
-  --color-text: var(--ink);
-  --color-link: var(--orange-deep);
-  --color-muted: #57514a;
-  --color-bg: var(--cream);
-  --color-surface: var(--paper);
-  --color-border: var(--ink);
-  --color-success: var(--leaf);
-  --color-danger: var(--orange-deep);
-  --color-star: var(--accent);
-  --color-closed: var(--stone);
-  --color-focus: var(--ink);
+  /* Roles that reuse the palette */
+  --color-link: var(--color-primary-strong);
+  --color-danger: var(--color-primary-strong);
+  --color-focus: var(--color-primary-strong);
+  --color-closed: var(--color-muted); /* closed places on the map */
+  --color-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent); /* dialog backdrops */
 
   /* Type: tall condensed display + clean sans body */
   --font-display: 'Anton', 'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
@@ -54,11 +52,11 @@
   /* Sticker look: thick outlines, hard shadows, round corners */
   --outline-w: 3px;
   --outline-w-thick: 4px;
-  --outline: var(--outline-w) solid var(--ink);
-  --outline-thick: var(--outline-w-thick) solid var(--ink);
-  --shadow-sm: 3px 3px 0 var(--ink);
-  --shadow: 5px 5px 0 var(--ink);
-  --shadow-lg: 8px 8px 0 var(--ink);
+  --outline: var(--outline-w) solid var(--color-ink);
+  --outline-thick: var(--outline-w-thick) solid var(--color-ink);
+  --shadow-sm: 3px 3px 0 var(--color-ink);
+  --shadow: 5px 5px 0 var(--color-ink);
+  --shadow-lg: 8px 8px 0 var(--color-ink);
   --radius-sm: 12px;
   --radius: 20px;
   --radius-lg: 28px;
@@ -90,7 +88,7 @@
 
   font-family: var(--font-body);
   line-height: 1.5;
-  color: var(--color-text);
+  color: var(--color-ink);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
 }
@@ -154,8 +152,8 @@ select {
   color: inherit;
 }
 
-/* Visible keyboard focus everywhere: a thick ink ring offset from the element,
-   readable on cream, paper, orange and yellow alike */
+/* Visible keyboard focus everywhere: a thick strawberry ring offset from the element,
+   readable on cream, white, pink and yellow alike */
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
@@ -187,7 +185,7 @@ select {
 /* Press feedback: the sticker drops into its shadow and squishes a little */
 .btn:active:not(:disabled) {
   transform: translate(3px, 3px) scale(0.97, 0.94);
-  box-shadow: 0 0 0 var(--ink);
+  box-shadow: 0 0 0 var(--color-ink);
 }
 
 .btn:disabled {
@@ -196,42 +194,43 @@ select {
   box-shadow: none;
 }
 
-/* Solid orange with ink text (see contrast notes above) */
+/* Main calls to action: deep strawberry with white text (see contrast notes above) */
 .btn-primary {
-  background: var(--color-primary);
+  background: var(--color-primary-strong);
   color: var(--color-on-primary);
 }
 
 .btn-primary:not(:disabled):hover {
-  background: var(--color-primary-hover);
+  background: var(--color-primary-strong-hover);
 }
 
 .btn-highlight {
-  background: var(--color-highlight);
-  color: var(--ink);
+  background: var(--color-accent);
+  color: var(--color-ink);
 }
 
 .btn-highlight:not(:disabled):hover {
-  background: #ffdd6b;
+  background: var(--color-accent-hover);
 }
 
+/* Outline button: sits on whatever surface it's placed on */
 .btn-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: transparent;
+  color: var(--color-ink);
 }
 
 .btn-secondary:not(:disabled):hover {
-  background: var(--cream);
+  background: color-mix(in srgb, var(--color-ink) 7%, transparent);
 }
 
-/* Ink button with cream text, for use on orange backgrounds */
+/* Ink button with cream text */
 .btn-ink {
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--color-ink);
+  color: var(--color-bg);
 }
 
 .btn-ink:not(:disabled):hover {
-  background: #2e2e2e;
+  background: color-mix(in srgb, var(--color-ink) 85%, var(--color-bg));
 }
 
 /* Big display-type buttons for the main calls to action */
@@ -259,7 +258,7 @@ select {
 
 /* Sticker card surface */
 .sticker {
-  background: var(--color-surface);
+  background: var(--color-card);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);

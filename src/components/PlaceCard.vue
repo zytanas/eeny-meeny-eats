@@ -25,7 +25,7 @@ function onCardClick(event) {
 
 <template>
   <article class="place-card" :class="{ 'is-link': link }" @click="onCardClick">
-    <div class="art" :class="`art--${art.background}`">
+    <div class="art">
       <CuisineArt :kind="art.kind" class="art-image" />
       <span class="tag">{{ place.cuisine }}</span>
       <span v-if="place.openNow != null" class="status" :class="place.openNow ? 'open' : 'closed'">
@@ -62,7 +62,7 @@ function onCardClick(event) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--color-surface);
+  background: var(--color-card);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -91,13 +91,11 @@ function onCardClick(event) {
   height: clamp(112px, 90px + 6vw, 144px);
   padding: clamp(0.75rem, 0.6rem + 0.6vw, 1rem);
   border-bottom: var(--outline);
-  background-image: radial-gradient(rgb(0 0 0 / 0.1) 1.5px, transparent 1.7px);
+  background-color: var(--color-accent);
+  background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 10%, transparent) 1.5px, transparent 1.7px);
   background-size: 14px 14px;
 }
 
-.art--orange { background-color: var(--orange); }
-.art--accent { background-color: var(--accent); }
-.art--cream { background-color: var(--cream); }
 
 .art-image {
   width: auto;
@@ -118,17 +116,17 @@ function onCardClick(event) {
   position: absolute;
   top: 0.6rem;
   padding: 0.1rem 0.6rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--color-card);
+  color: var(--color-ink);
   font-size: 0.8rem;
   font-weight: 800;
 }
 
 .tag {
   left: 0.6rem;
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: 2px 2px 0 var(--color-ink);
   transform: rotate(-3deg);
 }
 
@@ -175,8 +173,8 @@ function onCardClick(event) {
 
 .star {
   margin-right: 0.15em;
-  color: var(--color-star);
-  -webkit-text-stroke: 1.2px var(--ink);
+  color: var(--color-rating);
+  -webkit-text-stroke: 1.2px var(--color-ink);
 }
 
 .count {
@@ -185,7 +183,7 @@ function onCardClick(event) {
 }
 
 .dot {
-  color: var(--orange-deep);
+  color: var(--color-primary-strong);
 }
 
 .cta {

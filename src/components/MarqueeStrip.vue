@@ -4,7 +4,7 @@ import { marqueeItems } from '@/content/marquee'
 
 const props = defineProps({
   items: { type: Array, default: () => marqueeItems },
-  // 'orange' | 'ink' | 'accent'
+  // 'ink' | 'primary' | 'accent'
   tone: { type: String, default: 'ink' },
   reverse: { type: Boolean, default: false },
   // Slight tilt for a stuck-on sticker look. A tilted strip bleeds past the edges
@@ -53,16 +53,16 @@ const run = computed(() => Array.from({ length: REPEAT }, () => props.items).fla
 }
 
 .marquee--ink {
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--color-ink);
+  color: var(--color-bg);
 }
-.marquee--orange {
-  background: var(--orange);
-  color: var(--ink);
+.marquee--primary {
+  background: var(--color-primary);
+  color: var(--color-ink);
 }
 .marquee--accent {
-  background: var(--accent);
-  color: var(--ink);
+  background: var(--color-accent);
+  color: var(--color-ink);
 }
 
 .marquee-track {
@@ -94,7 +94,7 @@ const run = computed(() => Array.from({ length: REPEAT }, () => props.items).fla
 }
 
 .marquee--ink .marquee-dot {
-  color: var(--orange);
+  color: var(--color-primary);
 }
 
 @keyframes marquee {

@@ -85,7 +85,7 @@ onMounted(() => places.loadNearby())
 
 .detail {
   padding: clamp(1.1rem, 0.8rem + 1.5vw, 2rem);
-  background: var(--color-surface);
+  background: var(--color-card);
   border: var(--outline);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -95,9 +95,9 @@ onMounted(() => places.loadNearby())
   display: inline-block;
   margin-bottom: 0.6rem;
   padding: 0.1rem 0.7rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--accent);
+  background: var(--color-accent);
   font-weight: 800;
   font-size: 0.875rem;
 }
@@ -123,9 +123,9 @@ dl {
 
 .stat {
   padding: 0.6rem 0.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: 12px;
-  background: var(--cream);
+  background: var(--color-bg);
 }
 
 .stat--rating,
@@ -134,7 +134,7 @@ dl {
 }
 
 .stat--rating {
-  background: var(--accent);
+  background: var(--color-accent);
 }
 
 dt {
@@ -166,8 +166,8 @@ dd {
 }
 
 .star {
-  color: var(--color-star);
-  -webkit-text-stroke: 1px var(--ink);
+  color: var(--color-rating);
+  -webkit-text-stroke: 1px var(--color-ink);
 }
 
 .open {

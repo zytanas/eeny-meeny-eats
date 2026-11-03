@@ -83,9 +83,9 @@ function renderUser() {
   userMarker?.remove()
   userMarker = L.circleMarker([props.center.lat, props.center.lon], {
     radius: 8,
-    color: cssVar('--ink'),
+    color: cssVar('--color-ink'),
     weight: 3,
-    fillColor: cssVar('--accent'),
+    fillColor: cssVar('--color-accent'),
     fillOpacity: 1,
   })
     .bindTooltip('You are here')
@@ -100,10 +100,10 @@ function renderMarkers() {
   props.places.forEach((place) => {
     L.circleMarker([place.lat, place.lon], {
       radius: 9,
-      color: cssVar('--ink'),
+      color: cssVar('--color-ink'),
       weight: 3,
-      // Grey only when known to be closed; unknown hours stay orange
-      fillColor: place.openNow === false ? cssVar('--stone') : cssVar('--orange'),
+      // Muted only when known to be closed; unknown hours stay strawberry
+      fillColor: place.openNow === false ? cssVar('--color-closed') : cssVar('--color-primary'),
       fillOpacity: 0.95,
     })
       .bindTooltip(place.name)

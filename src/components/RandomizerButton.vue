@@ -16,7 +16,7 @@ function randomize() {
 </script>
 
 <template>
-  <button class="btn btn-ink randomizer-btn" :disabled="!count" @click="randomize">
+  <button class="btn btn-primary randomizer-btn" :disabled="!count" @click="randomize">
     <span class="dice" aria-hidden="true">🎲</span>
     Pick for me
     <span v-if="count" class="count" :aria-label="`from ${count} places`">{{ count }}</span>
@@ -34,7 +34,7 @@ function randomize() {
   font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  box-shadow: 5px 5px 0 var(--orange), 5px 5px 0 3px var(--ink);
+  box-shadow: 5px 5px 0 var(--color-ink);
   white-space: nowrap;
 }
 
@@ -58,10 +58,10 @@ function randomize() {
   min-width: 30px;
   height: 30px;
   padding: 0 0.4rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--orange);
-  color: var(--ink);
+  background: var(--color-accent);
+  color: var(--color-ink);
   font-family: var(--font-body);
   font-size: 0.9rem;
   font-weight: 800;

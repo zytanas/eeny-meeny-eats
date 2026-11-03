@@ -5,6 +5,8 @@ import { geocodeArea } from '@/services/api'
 export const METRO_MANILA = { lat: 14.5547, lon: 121.0244 }
 
 const STORAGE_KEY = 'eme:location'
+const RECENT_KEY = 'eme:recent-areas'
+const MAX_RECENT = 3
 
 // Restore the last location so a page refresh doesn't bounce the user home
 function loadSaved() {
@@ -12,6 +14,16 @@ function loadSaved() {
     return JSON.parse(sessionStorage.getItem(STORAGE_KEY)) || {}
   } catch {
     return {}
+  }
+}
+
+// Last few typed areas, newest first. Kept across visits (localStorage), unlike the location itself.
+function loadRecent() {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY))
+    return Array.isArray(list) ? list.filter((a) => typeof a === 'string').slice(0, MAX_RECENT) : []
+  } catch {
+    return []
   }
 }
 
@@ -23,6 +35,7 @@ export const useLocationStore = defineStore('location', {
       area: saved.area ?? '', // typed city/area when location is denied
       status: saved.coords ? 'ready' : 'idle', // idle | locating | geocoding | ready | denied | error
       error: null,
+      recentAreas: loadRecent(),
     }
   },
 
@@ -76,6 +89,7 @@ export const useLocationStore = defineStore('location', {
         this.area = text
         this.status = 'ready'
         this.persist()
+        this.addRecentArea(text)
         return true
       } catch (err) {
         this.status = 'error'
@@ -88,6 +102,26 @@ export const useLocationStore = defineStore('location', {
     clearError() {
       this.error = null
       if (this.status === 'denied' || this.status === 'error') this.status = this.coords ? 'ready' : 'idle'
+    },
+
+    // Moves the area to the front, dropping a same-name duplicate (any letter case)
+    addRecentArea(text) {
+      const rest = this.recentAreas.filter((a) => a.toLowerCase() !== text.toLowerCase())
+      this.recentAreas = [text, ...rest].slice(0, MAX_RECENT)
+      this.persistRecent()
+    },
+
+    clearRecentAreas() {
+      this.recentAreas = []
+      this.persistRecent()
+    },
+
+    persistRecent() {
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(this.recentAreas))
+      } catch {
+        // Storage unavailable (private mode); recents just won't survive a reload
+      }
     },
 
     persist() {

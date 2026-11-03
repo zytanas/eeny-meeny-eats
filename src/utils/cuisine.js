@@ -10,21 +10,10 @@ const ART_KEYWORDS = {
   burger: ['american', 'burger', 'fast food', 'bbq', 'grill', 'steak', 'chicken'],
 }
 
-// Illustration backgrounds rotate through the palette so the list doesn't look uniform
-const ART_BACKGROUND = {
-  noodles: 'accent',
-  rice: 'orange',
-  coffee: 'orange',
-  pizza: 'cream',
-  taco: 'cream',
-  burger: 'accent',
-  plate: 'accent', // fallback for unknown cuisines
-}
-
 export function cuisineArt(cuisine = '') {
   const label = cuisine.toLowerCase()
   const kind =
     Object.keys(ART_KEYWORDS).find((key) => ART_KEYWORDS[key].some((word) => label.includes(word))) ??
     'plate'
-  return { kind, background: ART_BACKGROUND[kind] }
+  return { kind }
 }

@@ -8,14 +8,14 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favico.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Pick For Me',
         short_name: 'PickForMe',
         description: 'Explore nearby restaurants and cafes, then let the randomizer decide.',
-        // Matches --cream in src/style.css
-        theme_color: '#fff3df',
-        background_color: '#fff3df',
+        // Matches --color-bg in src/style.css
+        theme_color: '#fff9f4',
+        background_color: '#fff9f4',
         display: 'standalone',
         start_url: '/',
         scope: '/',

@@ -82,7 +82,7 @@ const cuisineChips = computed(() => [...new Set([...places.availableCuisines, ..
   gap: 1rem;
   margin-bottom: 1rem;
   padding: var(--gutter);
-  background: var(--color-surface);
+  background: var(--color-card);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -112,10 +112,10 @@ legend {
 .chip {
   min-height: var(--tap-min);
   padding: 0 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-surface);
-  box-shadow: 2px 2px 0 var(--ink);
+  background: var(--color-card);
+  box-shadow: 2px 2px 0 var(--color-ink);
   font-weight: 700;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -127,20 +127,20 @@ legend {
 
 .chip:active {
   transform: translate(2px, 2px) scale(0.95);
-  box-shadow: 0 0 0 var(--ink);
+  box-shadow: 0 0 0 var(--color-ink);
 }
 
 /* Selected: flips to an ink sticker with a check, and pops */
 .chip[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 2px 2px 0 var(--orange);
+  background: var(--color-accent);
+  color: var(--color-ink);
+  box-shadow: 2px 2px 0 var(--color-ink);
   animation: chip-pop var(--dur-pop) var(--ease-pop);
 }
 
 .chip[aria-pressed='true']::before {
   content: '✓ ';
-  color: var(--accent);
+  color: var(--color-ink);
 }
 
 /* Custom switch for "Open now" (the real checkbox stays for accessibility) */
@@ -165,10 +165,10 @@ legend {
   position: relative;
   width: 48px;
   height: 28px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--cream);
-  box-shadow: 2px 2px 0 var(--ink);
+  background: var(--color-bg);
+  box-shadow: 2px 2px 0 var(--color-ink);
   transition: background-color 0.15s;
 }
 
@@ -179,14 +179,14 @@ legend {
   left: 2px;
   width: 20px;
   height: 20px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: 50%;
-  background: var(--paper);
+  background: var(--color-card);
   transition: transform 0.2s var(--ease-pop);
 }
 
 .toggle input:checked + .switch {
-  background: var(--orange);
+  background: var(--color-primary);
 }
 
 .toggle input:checked + .switch::after {

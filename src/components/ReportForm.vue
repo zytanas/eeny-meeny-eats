@@ -153,7 +153,7 @@ async function send() {
   padding: var(--gutter);
   border: var(--outline);
   border-radius: var(--radius);
-  background: var(--cream);
+  background: var(--color-card);
   box-shadow: var(--shadow-sm);
 }
 
@@ -188,10 +188,10 @@ fieldset {
   align-items: center;
   min-height: var(--tap-min);
   padding: 0 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--paper);
-  box-shadow: 2px 2px 0 var(--ink);
+  background: var(--color-card);
+  box-shadow: 2px 2px 0 var(--color-ink);
   font-weight: 700;
   transition:
     transform var(--dur-press) ease-out,
@@ -204,15 +204,15 @@ fieldset {
 }
 
 .type input:checked + .type-chip {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 2px 2px 0 var(--orange);
+  background: var(--color-accent);
+  color: var(--color-ink);
+  box-shadow: 2px 2px 0 var(--color-ink);
   animation: chip-pop var(--dur-pop) var(--ease-pop);
 }
 
 .type input:checked + .type-chip::before {
   content: '✓ ';
-  color: var(--accent);
+  color: var(--color-ink);
 }
 
 .type input:focus-visible + .type-chip {
@@ -233,10 +233,14 @@ textarea {
   padding: 0.75rem 1rem;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--paper);
+  background: var(--color-bg);
   font: inherit;
   font-size: max(16px, 1rem); /* 16px+ stops iOS zooming the page on focus */
   resize: vertical;
+}
+
+textarea::placeholder {
+  color: var(--color-muted);
 }
 
 .error {
@@ -268,9 +272,9 @@ textarea {
 .thanks-sticker {
   display: inline-block;
   padding: 0.4rem 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--accent);
+  background: var(--color-accent);
   font-weight: 800;
   transform: rotate(-2deg);
 }

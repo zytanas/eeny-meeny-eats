@@ -52,7 +52,7 @@ defineProps({
   padding: 2rem 1rem;
   border: var(--outline);
   border-radius: var(--radius);
-  background: var(--paper);
+  background: var(--color-card);
   box-shadow: var(--shadow);
   text-align: center;
   font-weight: 700;

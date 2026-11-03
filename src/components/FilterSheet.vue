@@ -81,14 +81,14 @@ function onDialogClick(event) {
   border: var(--outline-thick);
   border-bottom: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: var(--paper);
-  box-shadow: 0 -6px 0 var(--ink);
-  color: var(--ink);
+  background: var(--color-card);
+  box-shadow: 0 -6px 0 var(--color-ink);
+  color: var(--color-ink);
   overflow: hidden;
 }
 
 .filter-sheet::backdrop {
-  background: rgb(20 20 20 / 0.45);
+  background: var(--color-scrim);
 }
 
 .filter-sheet[open] {
@@ -109,7 +109,7 @@ function onDialogClick(event) {
   height: 5px;
   margin: 0.75rem auto 0;
   border-radius: var(--radius-pill);
-  background: var(--ink);
+  background: var(--color-ink);
   opacity: 0.35;
 }
 
@@ -135,7 +135,7 @@ function onDialogClick(event) {
   height: 44px;
   border: var(--outline);
   border-radius: 50%;
-  background: var(--cream);
+  background: var(--color-bg);
   box-shadow: var(--shadow-sm);
   font-weight: 800;
   cursor: pointer;
@@ -170,7 +170,7 @@ function onDialogClick(event) {
   flex-shrink: 0;
   padding: 0.75rem var(--pad-right) calc(0.75rem + env(safe-area-inset-bottom)) var(--pad-left);
   border-top: var(--outline);
-  background: var(--paper);
+  background: var(--color-card);
 }
 
 /* ---------- Side panel (tablets) ---------- */
@@ -183,7 +183,7 @@ function onDialogClick(event) {
     border: 0;
     border-left: var(--outline-thick);
     border-radius: 0;
-    box-shadow: -6px 0 0 var(--ink);
+    box-shadow: -6px 0 0 var(--color-ink);
   }
 
   .filter-sheet[open] {

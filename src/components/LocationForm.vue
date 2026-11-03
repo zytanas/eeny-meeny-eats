@@ -19,7 +19,7 @@ const copy = {
   locating: 'Finding you…',
   divider: 'or',
   areaLabel: 'Type a city or area',
-  areaPlaceholder: 'e.g. Makati, BGC, Quezon City',
+  areaPlaceholder: 'Makati, BGC, Quezon City',
   searchArea: 'Search this area',
   searchingArea: 'Looking it up…',
 }
@@ -34,9 +34,10 @@ async function useMyLocation() {
   if (await location.requestBrowserLocation()) emit('located')
 }
 
-async function useTypedArea() {
-  if (!area.value.trim() || busy.value) return
-  if (await location.setManualArea(area.value)) {
+// Used by the typed input and by any area chips a parent puts in the slot
+async function search(text) {
+  if (!text.trim() || busy.value) return
+  if (await location.setManualArea(text)) {
     area.value = ''
     emit('located')
   }
@@ -51,13 +52,20 @@ async function useTypedArea() {
       :disabled="busy"
       @click="useMyLocation"
     >
-      <span class="pin" aria-hidden="true">📍</span>
+      <!-- An SVG, not the 📍 emoji, so it takes the button's text color -->
+      <svg class="pin" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          fill-rule="evenodd"
+          d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 4.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"
+        />
+      </svg>
       {{ location.status === 'locating' ? copy.locating : copy.useLocation }}
     </button>
+    <slot name="after-locate" />
 
     <div class="divider"><span>{{ copy.divider }}</span></div>
 
-    <form class="area-form" @submit.prevent="useTypedArea">
+    <form class="area-form" @submit.prevent="search(area)">
       <label :for="inputId" class="area-label">{{ copy.areaLabel }}</label>
       <input
         :id="inputId"
@@ -68,6 +76,8 @@ async function useTypedArea() {
         :aria-invalid="location.error ? 'true' : undefined"
         :aria-describedby="location.error ? `${idPrefix}-error` : undefined"
       />
+      <!-- e.g. area chips; `search` runs the lookup straight away -->
+      <slot name="after-input" :search="search" :busy="busy" />
       <button class="btn btn-secondary btn-block area-btn" type="submit" :disabled="!area.trim() || busy">
         <span v-if="location.status === 'geocoding'" class="spinner" aria-hidden="true"></span>
         {{ location.status === 'geocoding' ? copy.searchingArea : copy.searchArea }}
@@ -98,7 +108,13 @@ async function useTypedArea() {
 }
 
 .pin {
-  font-size: 1.2rem;
+  flex-shrink: 0;
+  width: 1.1em;
+  height: 1.1em;
+  fill: currentColor;
+  stroke: var(--color-ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
 }
 
 .divider {
@@ -116,7 +132,7 @@ async function useTypedArea() {
   flex: 1;
   height: var(--outline-w);
   border-radius: 2px;
-  background: var(--ink);
+  background: var(--color-ink);
 }
 
 .area-form {
@@ -134,8 +150,8 @@ async function useTypedArea() {
   padding: 0 1rem;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--cream);
-  box-shadow: inset 3px 3px 0 rgb(0 0 0 / 0.08);
+  background: var(--color-bg);
+  box-shadow: inset 3px 3px 0 color-mix(in srgb, var(--color-ink) 8%, transparent);
   font-weight: 600;
 }
 
@@ -155,10 +171,10 @@ async function useTypedArea() {
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--ink);
+  background: var(--color-accent);
+  color: var(--color-ink);
 }
 
 .spinner {

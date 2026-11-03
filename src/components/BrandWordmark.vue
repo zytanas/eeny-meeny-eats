@@ -59,16 +59,16 @@ function letterStyle(i) {
 }
 
 .word--ink {
-  color: var(--ink);
+  color: var(--color-ink);
 }
 
-/* "EATS!" sits on an orange sticker */
+/* "EATS!" sits on a strawberry sticker */
 .word--sticker {
   padding: 0.1em 0.35em 0.14em;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--orange);
-  color: var(--ink);
+  background: var(--color-primary);
+  color: var(--color-ink);
   box-shadow: var(--shadow-sm);
   transform: rotate(-4deg);
 }

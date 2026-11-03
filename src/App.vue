@@ -27,7 +27,7 @@ import BrandWordmark from '@/components/BrandWordmark.vue'
   align-items: center;
   height: var(--header-total);
   padding: env(safe-area-inset-top) var(--pad-right) 0 var(--pad-left);
-  background: var(--cream);
+  background: var(--color-bg);
   border-bottom: var(--outline);
 }
 
@@ -37,7 +37,7 @@ import BrandWordmark from '@/components/BrandWordmark.vue'
   min-height: 44px;
   padding: 0.25rem 0.1rem;
   border-radius: var(--radius-sm);
-  color: var(--ink);
+  color: var(--color-ink);
   text-decoration: none;
 }
 

@@ -1,62 +1,89 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { useLocationStore } from '@/stores/location'
 import { prefersReducedMotion } from '@/utils/motion'
-import MarqueeStrip from '@/components/MarqueeStrip.vue'
 import LocationForm from '@/components/LocationForm.vue'
+import chickenSvg from '@/assets/stickers/chicken.svg'
+import sodaSvg from '@/assets/stickers/soda.svg'
+import coffeeSvg from '@/assets/stickers/coffee.svg'
+import ramenSvg from '@/assets/stickers/ramen.svg'
+import pizzaSvg from '@/assets/stickers/pizza.svg'
+import friesSvg from '@/assets/stickers/fries.svg'
+import hotdogSvg from '@/assets/stickers/hotdog.svg'
+import burgerSvg from '@/assets/stickers/burger.svg'
+import pinSvg from '@/assets/stickers/pin.svg'
+import mapSvg from '@/assets/stickers/map.svg'
+import slotSvg from '@/assets/stickers/slot.svg'
 
 // All headline, subline and button text for this screen, in one place for easy editing
 const copy = {
   intro: {
     // Beat 1 (one line each), then beat 2 lands as the punchline
-    headlineSetup: ['‘Kahit saan.’', '‘Ikaw bahala.’'],
+    // Each line is wrapped in oversized double quotes in the template
+    headlineSetup: ['Kahit saan.', 'Ikaw bahala.'],
     headlinePunch: 'Sound familiar?',
     subline: "Explore what's near you, or let us pick for you.",
     cta: 'Bahala na!',
-    skip: 'Skip',
     scrollHint: 'or scroll down',
   },
   location: {
-    headline: "Can't decide where to eat?",
-    subline: 'Explore restaurants and cafes near you. Still stuck? Let the randomizer pick for you.',
-    // The form's own text lives in components/LocationForm.vue
+    headline: 'Saan ka ngayon?',
+    subline: "Tell us where you are and we'll find food nearby.",
+    // The form's own text (buttons, input) lives in components/LocationForm.vue
+    privacyNote: "We only use your location to find food nearby. It's never saved.",
+    recentLabel: 'Recent',
+    clearRecent: 'Clear',
+    clearRecentLabel: 'Clear recent searches',
+    quickPicksLabel: 'Quick picks',
+    moreAreas: 'More areas',
     resume: (label) => `Continue exploring ${label} →`,
   },
-}
-const fullHeadline = [...copy.intro.headlineSetup, copy.intro.headlinePunch].join(' ')
-
-// Decorative food stickers floating around the hero
-const stickers = ['🍜', '🍕', '🥟', '🧋', '🍔']
-
-const INTRO_SEEN_KEY = 'eme:introSeen'
-// Visiting /?intro=1 shows the intro again (handy while developing)
-const INTRO_RESET_PARAM = 'intro'
-
-// localStorage can throw (private mode, blocked storage); treat that as "not seen"
-function hasSeenIntro() {
-  try {
-    return localStorage.getItem(INTRO_SEEN_KEY) === '1'
-  } catch {
-    return false
-  }
+  howItWorks: {
+    headline: 'How it works',
+    // Each step's sticker is set in `howItWorksSteps` below
+    steps: [
+      { title: 'Share your location', text: 'Or type any city or area.' },
+      { title: "Explore what's near", text: 'Browse places on the map and list.' },
+      { title: 'Bahala na!', text: 'Still stuck? Let us pick for you.' },
+    ],
+  },
 }
 
-function markIntroSeen() {
-  try {
-    localStorage.setItem(INTRO_SEEN_KEY, '1')
-  } catch {
-    // Intro will just show again next visit
-  }
-}
+// Area chips under the input. Tapping one searches that area right away.
+// Ordered Luzon, then Visayas, then Mindanao.
+const quickPickAreas = [
+  'Makati', 'BGC', 'Tagaytay', 'La Union', 'Baguio', 'Pampanga', 'Vigan',
+  'Cebu City', 'Iloilo City', 'Bacolod',
+  'Davao City', 'Cagayan de Oro',
+]
+// Only the first few show until "More areas" is tapped, so the card stays short
+const QUICK_PICKS_SHOWN = 6
 
-const route = useRoute()
+const howItWorksSteps = copy.howItWorks.steps.map((step, i) => ({
+  ...step,
+  sticker: [pinSvg, mapSvg, slotSvg][i],
+}))
+const fullHeadline = [...copy.intro.headlineSetup.map((line) => `“${line}”`), copy.intro.headlinePunch].join(' ')
+
+// Decorative food stickers scattered around the hero edges.
+// Position, size and rotation live in the CSS (.food-sticker--<name>).
+const stickers = [
+  { name: 'chicken', src: chickenSvg },
+  { name: 'pizza', src: pizzaSvg },
+  { name: 'fries', src: friesSvg },
+  { name: 'burger', src: burgerSvg },
+  { name: 'soda', src: sodaSvg },
+  { name: 'hotdog', src: hotdogSvg },
+  { name: 'coffee', src: coffeeSvg },
+  { name: 'ramen', src: ramenSvg },
+]
+
 const router = useRouter()
 const location = useLocationStore()
 
-// Intro shows only until it has been seen once (or when forced with ?intro=1)
-const showIntro = ref(route.query[INTRO_RESET_PARAM] === '1' || !hasSeenIntro())
+// The intro plays on every visit, including return visits
 const introEl = ref(null)
 const locationStep = ref(null)
 const locationHeading = ref(null)
@@ -64,20 +91,17 @@ let observer = null
 let gsapCtx = null
 
 onMounted(() => {
-  if (!showIntro.value) return
-
   playIntro()
 
-  // Scrolling the location step into view counts as having seen the intro
+  // The location step fades in once it scrolls into view
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
-        markIntroSeen()
         locationStep.value?.classList.add('is-visible')
         observer.disconnect()
       }
     },
-    { threshold: 0.35 },
+    { threshold: 0.2 },
   )
   observer.observe(locationStep.value)
 })
@@ -124,44 +148,61 @@ function playIntro() {
   }, introEl.value)
 }
 
+// The Clear button disappears with the recents, so hand focus to the first quick pick
+const quickPicksEl = ref(null)
+async function clearRecent() {
+  location.clearRecentAreas()
+  await nextTick()
+  quickPicksEl.value?.querySelector('button')?.focus()
+}
+
+// "More areas" removes itself, so focus moves to the first newly shown chip
+const showAllAreas = ref(false)
+const visibleQuickPicks = computed(() =>
+  showAllAreas.value ? quickPickAreas : quickPickAreas.slice(0, QUICK_PICKS_SHOWN),
+)
+async function expandQuickPicks() {
+  showAllAreas.value = true
+  await nextTick()
+  quickPicksEl.value?.querySelectorAll('.chips button')[QUICK_PICKS_SHOWN]?.focus()
+}
+
 function continueToLocation() {
-  markIntroSeen()
   locationStep.value.scrollIntoView({
     behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     block: 'start',
   })
   locationHeading.value?.focus({ preventScroll: true })
 }
-
-async function skipIntro() {
-  markIntroSeen()
-  gsapCtx?.revert()
-  showIntro.value = false
-  observer?.disconnect()
-  await nextTick()
-  window.scrollTo({ top: 0 })
-  locationHeading.value?.focus({ preventScroll: true })
-}
 </script>
 
 <template>
   <div class="home">
-    <section v-if="showIntro" ref="introEl" class="intro" aria-labelledby="intro-headline">
-      <span v-for="(s, i) in stickers" :key="s" class="food-sticker" :class="`food-sticker--${i + 1}`" aria-hidden="true">
-        {{ s }}
-      </span>
-
-      <a href="#location-step" class="skip" @click.prevent="skipIntro">{{ copy.intro.skip }}</a>
+    <section ref="introEl" class="intro" aria-labelledby="intro-headline">
+      <img
+        v-for="s in stickers"
+        :key="s.name"
+        :src="s.src"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+        width="420"
+        height="385"
+        class="food-sticker"
+        :class="`food-sticker--${s.name}`"
+      />
 
       <div class="intro-content">
         <h1 id="intro-headline" class="intro-headline display" :aria-label="fullHeadline">
           <span class="setup" aria-hidden="true">
-            <span v-for="line in copy.intro.headlineSetup" :key="line" class="setup-line">{{ line }}</span>
+            <span v-for="line in copy.intro.headlineSetup" :key="line" class="setup-line"
+              ><span class="quote">“</span>{{ line }}<span class="quote">”</span></span
+            >
           </span>
           <span class="punch" aria-hidden="true">{{ copy.intro.headlinePunch }}</span>
         </h1>
         <p class="intro-subline">{{ copy.intro.subline }}</p>
-        <button class="btn btn-ink btn-display intro-cta" @click="continueToLocation">{{ copy.intro.cta }}</button>
+        <button class="btn btn-primary btn-display intro-cta" @click="continueToLocation">{{ copy.intro.cta }}</button>
       </div>
 
       <p class="scroll-hint" aria-hidden="true">
@@ -170,40 +211,125 @@ async function skipIntro() {
       </p>
     </section>
 
-    <MarqueeStrip class="home-marquee" :tilt="showIntro ? -2 : 0" />
+    <section id="location-step" ref="locationStep" class="container location-step reveal">
+      <!-- Left (or first, when stacked): headline and the steps. Right: the location card. -->
+      <div class="location-intro">
+        <h2 ref="locationHeading" tabindex="-1" class="location-headline display">
+          {{ copy.location.headline }}
+        </h2>
+        <p class="location-subline">{{ copy.location.subline }}</p>
 
-    <section
-      id="location-step"
-      ref="locationStep"
-      class="container location-step"
-      :class="{ reveal: showIntro }"
-    >
-      <component
-        :is="showIntro ? 'h2' : 'h1'"
-        ref="locationHeading"
-        tabindex="-1"
-        class="location-headline display"
-      >
-        {{ copy.location.headline }}
-      </component>
-      <p class="location-subline">{{ copy.location.subline }}</p>
-
-      <div class="location-card sticker">
-        <LocationForm id-prefix="home" @located="router.push({ name: 'explore' })" />
+        <section class="how-it-works" aria-labelledby="how-it-works-headline">
+          <h3 id="how-it-works-headline" class="how-headline display">{{ copy.howItWorks.headline }}</h3>
+          <!-- Dashed connectors between the rows (::before/::after) read as a sequence -->
+          <ol class="steps">
+            <li v-for="(step, i) in howItWorksSteps" :key="step.title" class="step sticker">
+              <span class="step-num" aria-hidden="true">{{ i + 1 }}</span>
+              <img
+                :src="step.sticker"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+                width="512"
+                height="512"
+                class="step-sticker"
+              />
+              <div class="step-body">
+                <h4 class="step-title">{{ step.title }}</h4>
+                <p class="step-text">{{ step.text }}</p>
+              </div>
+            </li>
+          </ol>
+        </section>
       </div>
 
-      <RouterLink v-if="location.hasLocation" :to="{ name: 'explore' }" class="resume">
-        {{ copy.location.resume(location.label) }}
-      </RouterLink>
+      <div class="location-main">
+        <!-- A mango card sits behind the form (::before), with two stickers peeking from behind -->
+        <div class="card-stack">
+          <img
+            :src="friesSvg"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+            width="420"
+            height="385"
+            class="peek-sticker peek-sticker--top"
+          />
+          <img
+            :src="sodaSvg"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+            width="420"
+            height="385"
+            class="peek-sticker peek-sticker--bottom"
+          />
+
+          <div class="location-card sticker">
+            <LocationForm id-prefix="home" @located="router.push({ name: 'explore' })">
+              <template #after-locate>
+                <p class="privacy-note">{{ copy.location.privacyNote }}</p>
+              </template>
+
+              <template #after-input="{ search }">
+                <div
+                  v-if="location.recentAreas.length"
+                  class="chip-group"
+                  role="group"
+                  aria-labelledby="home-recent-label"
+                >
+                  <div class="chip-group-head">
+                    <span id="home-recent-label" class="chip-group-label">{{ copy.location.recentLabel }}</span>
+                    <button
+                      type="button"
+                      class="clear-link"
+                      :aria-label="copy.location.clearRecentLabel"
+                      @click="clearRecent"
+                    >
+                      {{ copy.location.clearRecent }}
+                    </button>
+                  </div>
+                  <ul class="chips">
+                    <li v-for="area in location.recentAreas" :key="area">
+                      <button type="button" class="chip chip--recent" @click="search(area)">
+                        <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <circle cx="12" cy="12" r="9" />
+                          <path d="M12 7v5l3.5 2" />
+                        </svg>
+                        {{ area }}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div ref="quickPicksEl" class="chip-group" role="group" aria-labelledby="home-picks-label">
+                  <span id="home-picks-label" class="chip-group-label">{{ copy.location.quickPicksLabel }}</span>
+                  <ul class="chips">
+                    <li v-for="area in visibleQuickPicks" :key="area">
+                      <button type="button" class="chip" @click="search(area)">{{ area }}</button>
+                    </li>
+                    <li v-if="!showAllAreas">
+                      <button type="button" class="chip chip--more" @click="expandQuickPicks">
+                        {{ copy.location.moreAreas }}
+                        <span class="chip-more-icon" aria-hidden="true">+</span>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+            </LocationForm>
+          </div>
+        </div>
+
+        <RouterLink v-if="location.hasLocation" :to="{ name: 'explore' }" class="resume">
+          {{ copy.location.resume(location.label) }}
+        </RouterLink>
+      </div>
     </section>
   </div>
 </template>
 
 <style scoped>
-.home {
-  overflow-x: clip; /* the tilted ticker bleeds past the edges */
-}
-
 /* ---------- Intro hero ---------- */
 /* Fills the screen under the header. Spacing and type also scale with the screen
    height (dvh), so short phones fit everything without cropping. If it still doesn't
@@ -215,64 +341,40 @@ async function skipIntro() {
   flex-direction: column;
   gap: clamp(1rem, 3dvh, 2rem);
   min-height: calc(100dvh - var(--header-total));
-  /* Top padding always clears the Skip button */
-  padding: calc(var(--gutter) + 44px + clamp(0.75rem, 4dvh, 3rem)) var(--pad-right)
+  padding: clamp(2rem, 6dvh, 4rem) var(--pad-right)
     calc(clamp(1rem, 3dvh, 2rem) + env(safe-area-inset-bottom)) var(--pad-left);
-  /* Orange with a faint halftone dot texture */
+  text-align: center;
+  /* Soft strawberry with a faint halftone dot texture */
   background:
-    radial-gradient(rgb(0 0 0 / 0.09) 1.5px, transparent 1.7px) 0 0 / 16px 16px,
-    var(--orange);
-  color: var(--ink);
+    radial-gradient(var(--color-hero-dot) 1.5px, transparent 1.7px) 0 0 / 16px 16px,
+    var(--color-hero);
+  color: var(--color-ink);
 }
 
-.skip {
-  position: absolute;
-  top: var(--gutter);
-  right: var(--pad-right);
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 1rem;
-  border: var(--outline);
-  border-radius: var(--radius-pill);
-  background: var(--cream);
-  box-shadow: var(--shadow-sm);
-  color: var(--ink);
-  font-size: 0.9rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition:
-    transform var(--dur-press) ease-out,
-    box-shadow var(--dur-press) ease-out;
-}
-
-.skip:active {
-  transform: translate(3px, 3px) scale(0.95);
-  box-shadow: none;
-}
-
+/* Everything in the hero sits on the center line */
 .intro-content {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: clamp(1rem, 2.5dvh, 1.6rem);
   width: 100%;
-  max-width: 760px;
+  max-width: 1100px;
   margin: auto; /* centers vertically too, above the scroll hint */
 }
 
+/* The dominant element of the hero. Width-driven (3rem on small phones up to 8rem),
+   but capped by height so a short screen doesn't push the CTA offscreen */
 .intro-headline {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15em;
+  align-items: center;
+  gap: 0.12em;
+  max-width: 100%;
   margin: 0;
-  /* Width-driven, but capped by height so a short phone doesn't push the CTA offscreen */
-  font-size: clamp(2.4rem, min(12.5vw, 8.5dvh), 7.5rem);
-  color: var(--ink);
+  font-size: clamp(2.75rem, min(10.5vw, 13dvh), 8rem);
+  color: var(--color-ink);
 }
 
 .setup,
@@ -280,21 +382,32 @@ async function skipIntro() {
   display: block;
 }
 
-/* The punchline: a cream sticker slapped on the poster */
+/* Oversized double quotes around each line. line-height: 0 stops them from
+   spreading the lines apart; vertical-align pulls them back down to the cap height. */
+.quote {
+  display: inline-block;
+  margin-inline: -0.04em; /* the marks have wide side bearings */
+  font-size: 1.4em;
+  line-height: 0;
+  vertical-align: -0.28em;
+}
+
+/* The punchline: a cream sticker slapped on the poster.
+   Sized in em so the badge, outline and shadow all grow with the headline. */
 .punch {
   display: inline-block;
   margin-top: 0.15em;
   padding: 0.08em 0.28em 0.12em;
-  border: var(--outline-thick);
-  border-radius: var(--radius);
-  background: var(--cream);
-  box-shadow: var(--shadow-lg);
+  border: max(var(--outline-w-thick), 0.055em) solid var(--color-ink);
+  border-radius: max(var(--radius), 0.3em);
+  background: var(--color-card);
+  box-shadow: max(6px, 0.1em) max(6px, 0.1em) 0 var(--color-ink);
   font-size: 0.72em;
   transform: rotate(-3deg);
 }
 
 .intro-subline {
-  margin: 0;
+  margin: 0 auto;
   max-width: 26ch;
   font-size: clamp(1.1rem, 1rem + 0.7vw, 1.45rem);
   font-weight: 700;
@@ -305,13 +418,13 @@ async function skipIntro() {
   min-height: clamp(56px, 50px + 1.2vw, 68px);
   padding: 0 clamp(1.75rem, 1.5rem + 1vw, 2.5rem);
   font-size: clamp(1.4rem, 1.25rem + 0.6vw, 1.75rem);
-  box-shadow: 6px 6px 0 var(--cream), 6px 6px 0 3px var(--ink);
+  box-shadow: 6px 6px 0 var(--color-ink);
   transform: rotate(-2deg);
 }
 
 .intro-cta:active:not(:disabled) {
   transform: rotate(-2deg) translate(5px, 5px) scale(0.97, 0.93);
-  box-shadow: 1px 1px 0 var(--cream);
+  box-shadow: 1px 1px 0 var(--color-ink);
 }
 
 /* In the flow (not absolutely placed) so it can never overlap the CTA on short screens */
@@ -332,93 +445,505 @@ async function skipIntro() {
   animation: nudge 1.6s ease-in-out 1.6s infinite;
 }
 
-/* Food stickers: outlined circles scattered behind the copy */
+/* Food stickers: the illustrations sit straight on the pink, around the edges.
+   Each one sets --w (width) and --rot; the shadow follows the drawing's outline.
+   Rotation, the pop-in (scale) and the bob (translate) each use their own
+   property, so the animations never fight over `transform`. */
 .food-sticker {
+  --w: 80px;
+  --rot: 0deg;
+  --shadow-off: 4px;
   position: absolute;
-  display: grid;
-  place-items: center;
-  width: clamp(48px, 36px + 3vw, 76px);
-  height: clamp(48px, 36px + 3vw, 76px);
-  border: var(--outline);
-  border-radius: 50%;
-  background: var(--cream);
-  box-shadow: var(--shadow-sm);
-  font-size: clamp(1.45rem, 1.1rem + 1.2vw, 2.3rem);
-  line-height: 1;
+  z-index: 0;
+  width: var(--w);
+  height: auto;
+  rotate: var(--rot);
+  filter: drop-shadow(var(--shadow-off) var(--shadow-off) 0 var(--color-ink));
+  pointer-events: none;
+  user-select: none;
   animation:
     sticker-in 0.35s var(--ease-pop) both,
-    bob 3.2s ease-in-out infinite;
+    bob 3.4s ease-in-out infinite;
 }
-.food-sticker--1 { top: 17%; right: 7%; transform: rotate(-12deg); background: var(--accent); animation-delay: 1.6s, 2s; }
-.food-sticker--2 { top: 4%;  left: 34%;  transform: rotate(10deg); animation-delay: 1.7s, 2.4s; }
-.food-sticker--3 { bottom: 16%; right: 6%; transform: rotate(-6deg); animation-delay: 1.8s, 1.8s; }
-.food-sticker--4 { bottom: 7%; left: 6%;  transform: rotate(8deg); background: var(--accent); animation-delay: 1.9s, 2.8s; }
-.food-sticker--5 { top: 44%; right: -14px; transform: rotate(14deg); animation-delay: 2s, 2.2s; }
 
-/* Phones: two stickers stay hidden so they don't crowd the copy */
-.food-sticker--2,
-.food-sticker--5 { display: none; }
+/* Phones: four small stickers tucked into the corners, bleeding off the edges */
+.food-sticker--chicken  { --w: clamp(64px, 19vw, 104px); --rot: -12deg; top: 1.5%;  left: -3%;  animation-delay: 1.6s, 2s; }
+.food-sticker--pizza    { --w: clamp(60px, 18vw, 96px);  --rot: 11deg;  top: 2%;    right: -3%; animation-delay: 1.7s, 2.6s; }
+.food-sticker--fries    { --w: clamp(56px, 16vw, 88px);  --rot: 8deg;   bottom: 2%; left: -2%;  animation-delay: 1.8s, 3.1s; }
+.food-sticker--burger   { --w: clamp(64px, 19vw, 104px); --rot: -9deg;  bottom: 1.5%; right: -3%; animation-delay: 1.9s, 2.3s; }
+.food-sticker--soda,
+.food-sticker--hotdog,
+.food-sticker--coffee,
+.food-sticker--ramen { display: none; }
 
+/* Tablets: bigger, with soda and hot dog joining on the sides */
 @media (min-width: 640px) {
-  .food-sticker--2,
-  .food-sticker--5 { display: grid; }
+  .food-sticker { --shadow-off: 5px; }
+  .food-sticker--chicken  { --w: clamp(110px, 15vw, 150px); top: 4%;  left: 2%; }
+  .food-sticker--pizza    { --w: clamp(100px, 14vw, 140px); top: 5%;  right: 2%; }
+  .food-sticker--fries    { --w: clamp(92px, 12vw, 124px);  bottom: 6%; left: 3%; }
+  .food-sticker--burger   { --w: clamp(110px, 15vw, 150px); bottom: 5%; right: 2%; }
+  .food-sticker--soda     { --w: clamp(80px, 10vw, 104px);  --rot: 7deg;  display: block; top: 42%; left: -3%;  animation-delay: 2s, 2.9s; }
+  .food-sticker--hotdog   { --w: clamp(84px, 11vw, 112px);  --rot: -14deg; display: block; top: 50%; right: -3%; animation-delay: 2.1s, 1.7s; }
 }
 
-/* Ticker between the intro and the location step */
-.home-marquee {
-  margin-top: -6px;
+/* Desktop: all eight, with room to roam on the sides */
+@media (min-width: 1024px) {
+  .food-sticker { --shadow-off: 6px; }
+  .food-sticker--chicken  { --w: clamp(128px, 12vw, 220px); top: 6%;  left: 4%; }
+  .food-sticker--pizza    { --w: clamp(120px, 11vw, 200px); top: 7%;  right: 5%; }
+  .food-sticker--fries    { --w: clamp(120px, 10vw, 170px); bottom: 9%; left: 5%; }
+  .food-sticker--burger   { --w: clamp(150px, 13vw, 220px); bottom: 7%; right: 4%; }
+  .food-sticker--soda     { --w: clamp(100px, 8.5vw, 140px); top: 44%; left: 1%; }
+  .food-sticker--hotdog   { --w: clamp(110px, 9.5vw, 160px); top: 40%; right: 1%; }
+  .food-sticker--coffee   { --w: clamp(110px, 9vw, 150px);  --rot: 4deg;  display: block; bottom: 3%; left: 22%;  animation-delay: 2.2s, 2.4s; }
+  .food-sticker--ramen    { --w: clamp(120px, 10vw, 170px); --rot: -6deg; display: block; bottom: 3%; right: 22%; animation-delay: 2.3s, 2.8s; }
 }
 
 /* ---------- Location step ---------- */
+/* Phones and tablets: one centered column (headline, steps, then the card).
+   Desktop: two columns, steps on the left and the card on the right (see below). */
 .location-step {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding-top: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  align-items: center;
+  gap: clamp(1rem, 0.6rem + 2vw, 2rem);
+  text-align: center;
+  padding-top: clamp(1.5rem, 1rem + 2vw, 3.5rem);
   padding-bottom: clamp(2.5rem, 2rem + 2vw, 4rem);
   scroll-margin-top: var(--header-total); /* clear the sticky header */
 }
 
+.location-intro,
+.location-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.location-main {
+  gap: 1rem;
+}
+
 .location-headline {
   margin: 0;
-  font-size: clamp(2.4rem, 1.6rem + 4.5vw, 4.5rem);
+  font-size: clamp(2.2rem, 1.6rem + 4vw, 4.5rem);
   outline: none;
 }
 
 .location-subline {
-  margin: 0 0 0.5rem;
-  max-width: 38ch;
-  font-size: var(--text-base);
-  font-weight: 500;
+  margin: 0.4rem auto 0;
+  max-width: 32ch;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.3;
 }
 
-/* Full width on phones (inside the container's side padding) */
+/* Desktop: wider container, two top-aligned columns, everything left-aligned */
+@media (min-width: 1024px) {
+  .location-step.container {
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: start;
+    column-gap: clamp(3rem, 1rem + 4vw, 5rem);
+    text-align: left;
+  }
+
+  .location-intro,
+  .location-main {
+    align-items: stretch;
+    max-width: none;
+  }
+
+  .location-subline {
+    margin-left: 0;
+  }
+}
+
+/* Full width on phones (inside the container's side padding), capped from tablet up.
+   Holds the mango backing card and the peeking stickers around the form. */
+.card-stack {
+  position: relative;
+  width: 100%;
+  margin-bottom: 0.75rem; /* room for the backing card */
+}
+
+/* The mango card behind, tilted and offset like a second sticker underneath */
+.card-stack::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: var(--outline-thick);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent);
+  box-shadow: var(--shadow);
+  rotate: -2deg;
+  translate: 4px 8px;
+}
+
+/* The form keeps left-aligned labels so it stays easy to read */
 .location-card {
+  position: relative;
+  z-index: 2;
   width: 100%;
   padding: clamp(1.1rem, 0.8rem + 1.5vw, 2rem);
   border-width: var(--outline-w-thick);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+  text-align: left;
 }
 
-/* Tablet and up: centered column with a capped card */
+/* Stickers tucked behind the card: most of each drawing is hidden under the card, so
+   they can never cover the form. Both peek out on the card's own side (over the top
+   edge and off the right edge), never toward the steps. Hidden on phones, where the
+   card fills the width and there's no margin for them to peek into. */
+.peek-sticker {
+  --w: 96px;
+  position: absolute;
+  z-index: 1;
+  display: none;
+  width: var(--w);
+  height: auto;
+  filter: drop-shadow(4px 4px 0 var(--color-ink));
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Pops up over the card's top edge, toward its right corner */
+.peek-sticker--top {
+  top: calc(var(--w) * -0.55);
+  right: 12%;
+  rotate: 10deg;
+}
+
+/* Out the right side, low down */
+.peek-sticker--bottom {
+  bottom: 14%;
+  right: calc(var(--w) * -0.5);
+  rotate: -12deg;
+}
+
 @media (min-width: 640px) {
-  .location-step {
-    align-items: center;
-    text-align: center;
+  .card-stack {
+    margin-top: calc(96px * 0.55); /* room for the top sticker above the card */
+    margin-bottom: 1.5rem;
   }
 
-  .location-subline {
-    margin-inline: auto;
+  .card-stack::before {
+    rotate: -3deg;
+    translate: 10px 12px;
   }
 
-  .location-card {
-    max-width: 520px;
-    text-align: left;
+  .peek-sticker {
+    display: block;
   }
 }
 
-/* Fades in when scrolled into view (only while the intro is shown).
+@media (min-width: 1024px) {
+  .card-stack {
+    margin-top: calc(112px * 0.55);
+  }
+
+  /* The card column leaves room on its right for the side sticker to peek into,
+     so it isn't cut off by the screen edge on narrower desktops */
+  .location-main {
+    padding-right: calc(112px * 0.4);
+  }
+
+  .peek-sticker {
+    --w: 112px;
+    filter: drop-shadow(5px 5px 0 var(--color-ink));
+  }
+
+  .peek-sticker--bottom {
+    right: calc(var(--w) * -0.4);
+  }
+}
+
+@media (min-width: 1280px) {
+  .location-main {
+    padding-right: 0; /* the container's side margin has room for it here */
+  }
+
+  .card-stack {
+    margin-top: calc(128px * 0.55);
+  }
+
+  .peek-sticker {
+    --w: 128px;
+  }
+
+  .peek-sticker--bottom {
+    right: calc(var(--w) * -0.5);
+  }
+}
+
+/* Sits right under "Use my location" (the form's 1rem gap is pulled in a little) */
+.privacy-note {
+  margin: -0.4rem 0 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+/* ---------- Area chips (recent + quick picks) ---------- */
+.chip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.chip-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chip-group-label {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
+/* Small text link, with an invisible padded box so it's still easy to tap */
+.clear-link {
+  margin: -0.6rem -0.5rem;
+  padding: 0.6rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--color-link);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Wrap onto more lines rather than scroll sideways */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: var(--tap-min);
+  padding: 0 0.9rem;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  box-shadow: 2px 2px 0 var(--color-ink);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--dur-press) ease-out,
+    box-shadow var(--dur-press) ease-out,
+    background-color var(--dur-fast);
+}
+
+.chip:hover {
+  background: var(--color-accent);
+}
+
+.chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--color-ink);
+}
+
+/* Recent searches: strawberry tint with a clock, so they read as "yours" */
+.chip--recent {
+  background: var(--color-hero);
+}
+
+/* Dashed outline and a "+" so it reads as "show more", not another area */
+.chip--more {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chip-more-icon {
+  font-size: 1.15em;
+  line-height: 1;
+}
+
+.chip-icon {
+  flex-shrink: 0;
+  width: 1.1em;
+  height: 1.1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- How it works ---------- */
+/* Rows at every size: number badge, sticker, then the text beside it.
+   Compact on phones so "Use my location" stays close to the top. */
+.how-it-works {
+  --sticker-w: 48px;
+  --step-pad-x: 0.9rem;
+  --step-gap: 1.5rem; /* the dashed connector spans this */
+  width: 100%;
+  margin-top: clamp(1rem, 0.6rem + 1.5vw, 2rem);
+}
+
+.how-headline {
+  margin: 0 0 1.1rem; /* clears the number badge */
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.4rem);
+}
+
+.steps {
+  display: grid;
+  gap: var(--step-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem var(--step-pad-x) 0.6rem calc(var(--step-pad-x) + 0.5rem);
+  text-align: left;
+}
+
+.step:nth-child(odd) { rotate: -0.6deg; }
+.step:nth-child(even) { rotate: 0.6deg; }
+
+/* Dashed connector down to the next row, lined up under the sticker, with a small
+   arrowhead at its end */
+.step:not(:last-child)::before,
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--step-pad-x) + 0.5rem + var(--sticker-w) / 2);
+  pointer-events: none;
+}
+
+/* Starts below the card's hard shadow and runs into the arrowhead */
+.step:not(:last-child)::before {
+  top: calc(100% + var(--outline-w) + 5px);
+  height: calc(var(--step-gap) - var(--outline-w) - 11px);
+  border-left: var(--outline-w) dashed var(--color-ink);
+  translate: -50% 0;
+}
+
+.step:not(:last-child)::after {
+  top: calc(100% + var(--step-gap) - 8px);
+  border: 5px solid transparent;
+  border-top: 6px solid var(--color-ink);
+  border-bottom: 0;
+  translate: -50% 0;
+}
+
+.step-num {
+  position: absolute;
+  top: -0.7rem;
+  left: -0.6rem;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: var(--outline);
+  border-radius: 50%;
+  background: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  rotate: -8deg;
+}
+
+.step-sticker {
+  flex-shrink: 0;
+  width: var(--sticker-w);
+  height: auto;
+  filter: drop-shadow(3px 3px 0 var(--color-ink));
+  user-select: none;
+}
+
+.step-title {
+  margin: 0 0 0.15rem;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 0.95rem + 0.4vw, 1.3rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.step-text {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+@media (min-width: 640px) {
+  .how-it-works {
+    --sticker-w: 60px;
+    --step-pad-x: 1.1rem;
+    --step-gap: 1.75rem;
+  }
+
+  .step {
+    padding-block: 0.8rem;
+  }
+
+  .step-num {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 1.1rem;
+  }
+}
+
+/* Desktop: roomier rows in the left column */
+@media (min-width: 1024px) {
+  .how-it-works {
+    --sticker-w: 76px;
+    --step-gap: 2.25rem;
+    margin-top: 2rem;
+  }
+
+  .step {
+    gap: 1.1rem;
+    padding-block: 1rem;
+  }
+
+  /* The last row points across the gap to the card */
+  .step:last-child::after {
+    content: '→';
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 0.6rem);
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1;
+    translate: 0 -55%;
+    pointer-events: none;
+  }
+}
+
+/* Fades in when scrolled into view.
    Full height so "Bahala na!" can scroll it all the way to the top. */
 .location-step.reveal {
   min-height: calc(100dvh - var(--header-total));
@@ -450,10 +975,10 @@ async function skipIntro() {
   }
 }
 
-/* Uses `translate` so it doesn't override each sticker's rotate transform */
+/* Uses `translate` so it doesn't override each sticker's `rotate` */
 @keyframes bob {
   0%, 100% { translate: 0 0; }
-  50% { translate: 0 -8px; }
+  50% { translate: 0 -10px; }
 }
 
 @keyframes nudge {

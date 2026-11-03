@@ -95,7 +95,7 @@ function openPlace(id) {
       @select="openPlace"
     />
 
-    <MarqueeStrip class="explore-marquee" tone="orange" />
+    <MarqueeStrip class="explore-marquee" tone="ink" />
 
     <div class="explore-side">
       <section class="explore-panel">
@@ -175,7 +175,7 @@ function openPlace(id) {
   display: flex;
   gap: 0.4rem;
   padding: 0.6rem var(--pad-right) 0.6rem var(--pad-left);
-  background: var(--cream);
+  background: var(--color-bg);
   border-bottom: var(--outline);
 }
 
@@ -189,7 +189,7 @@ function openPlace(id) {
   min-height: 44px;
   border: var(--outline);
   border-radius: var(--radius-pill);
-  background: var(--paper);
+  background: var(--color-card);
   box-shadow: var(--shadow-sm);
   font-family: var(--font-display);
   font-size: 1.15rem;
@@ -204,9 +204,9 @@ function openPlace(id) {
 }
 
 .view-btn[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 3px 3px 0 var(--orange);
+  background: var(--color-ink);
+  color: var(--color-bg);
+  box-shadow: 3px 3px 0 var(--color-ink);
 }
 
 .view-btn:active {
@@ -264,7 +264,7 @@ function openPlace(id) {
   overflow-wrap: anywhere; /* long area names can't push the page sideways */
 }
 
-/* Count as an orange sticker */
+/* Count as a strawberry sticker */
 .summary-count {
   display: inline-block;
   margin-right: 0.15em;
@@ -272,7 +272,7 @@ function openPlace(id) {
   border: var(--outline);
   border-radius: var(--radius-sm);
   background: var(--color-primary);
-  color: var(--color-on-primary);
+  color: var(--color-ink);
   box-shadow: var(--shadow-sm);
   transform: rotate(-3deg);
 }
@@ -294,7 +294,7 @@ function openPlace(id) {
 .location-name {
   text-decoration: underline;
   text-decoration-thickness: 4px;
-  text-decoration-color: var(--orange);
+  text-decoration-color: var(--color-primary);
   text-underline-offset: 5px;
 }
 
@@ -304,10 +304,10 @@ function openPlace(id) {
   gap: 0.25em;
   margin-left: 0.4em;
   padding: 0.15em 0.6em;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--accent);
-  box-shadow: 2px 2px 0 var(--ink);
+  background: var(--color-accent);
+  box-shadow: 2px 2px 0 var(--color-ink);
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 800;
@@ -337,8 +337,8 @@ function openPlace(id) {
 }
 
 .filter-toggle.is-open {
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--color-ink);
+  color: var(--color-bg);
 }
 
 .badge {
@@ -346,10 +346,10 @@ function openPlace(id) {
   place-items: center;
   min-width: 22px;
   height: 22px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
   background: var(--color-accent);
-  color: var(--ink);
+  color: var(--color-ink);
   font-size: 0.75rem;
   font-weight: 800;
 }
@@ -428,7 +428,6 @@ function openPlace(id) {
   }
 
   .explore-side {
-    position: relative; /* anchors the randomizer to this column */
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -442,9 +441,10 @@ function openPlace(id) {
     padding-left: var(--gutter);
   }
 
-  /* Centered at the bottom of the list column, away from the map's attribution */
+  /* Centered at the bottom of the map, lifted clear of its attribution line */
   .randomizer-dock {
-    position: absolute;
+    left: calc((100vw - var(--list-col)) / 2);
+    bottom: calc(var(--dock-gap) + 24px + env(safe-area-inset-bottom));
   }
 }
 </style>

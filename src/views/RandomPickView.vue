@@ -7,6 +7,7 @@ import { prefersReducedMotion, celebrate } from '@/utils/motion'
 import PlaceCard from '@/components/PlaceCard.vue'
 import MarqueeStrip from '@/components/MarqueeStrip.vue'
 import { pickMarqueeItems } from '@/content/marquee'
+import slotSvg from '@/assets/stickers/slot.svg'
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -145,6 +146,20 @@ function reroll() {
       </Transition>
 
       <div ref="stageEl" class="stage">
+        <!-- Same slot sticker as the "Bahala na!" step on Home, perched on the reel's corner -->
+        <Transition name="pop">
+          <img
+            v-if="phase === 'spinning'"
+            :src="slotSvg"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+            width="512"
+            height="512"
+            class="slot-sticker"
+          />
+        </Transition>
+
         <Transition name="pop" mode="out-in" @enter="onReelEnter">
           <button
             v-if="phase === 'spinning'"
@@ -214,7 +229,22 @@ function reroll() {
 .stage {
   display: grid;
   align-items: center;
+  position: relative;
   min-height: 132px;
+}
+
+/* Big slot-machine sticker overlapping the reel's top-right corner */
+.slot-sticker {
+  position: absolute;
+  top: clamp(-64px, -40px - 3vw, -48px);
+  right: clamp(-16px, -1vw, -8px);
+  z-index: 3;
+  width: clamp(96px, 80px + 6vw, 140px);
+  height: auto;
+  filter: drop-shadow(4px 4px 0 var(--color-ink));
+  rotate: 8deg;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* ---------- Slot-machine reel ---------- */
@@ -228,8 +258,8 @@ function reroll() {
   overflow: hidden;
   border: var(--outline-thick);
   border-radius: var(--radius-lg);
-  background: var(--orange);
-  color: var(--ink);
+  background: var(--color-primary);
+  color: var(--color-ink);
   box-shadow: var(--shadow-lg);
   cursor: pointer;
 }
@@ -247,11 +277,11 @@ function reroll() {
 }
 .reel::before {
   top: 0;
-  background: linear-gradient(rgb(0 0 0 / 0.28), transparent);
+  background: linear-gradient(color-mix(in srgb, var(--color-ink) 28%, transparent), transparent);
 }
 .reel::after {
   bottom: 0;
-  background: linear-gradient(transparent, rgb(0 0 0 / 0.28));
+  background: linear-gradient(transparent, color-mix(in srgb, var(--color-ink) 28%, transparent));
 }
 
 .reel-strip {
@@ -281,9 +311,9 @@ function reroll() {
   bottom: 0.5rem;
   z-index: 2;
   padding: 0 0.5rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--cream);
+  background: var(--color-bg);
   font-size: 0.7rem;
   font-weight: 800;
   line-height: 1.5;

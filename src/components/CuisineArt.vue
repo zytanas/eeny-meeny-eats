@@ -14,9 +14,9 @@ defineProps({
       <path d="M24 62 Q40 42 60 50 Q80 42 96 62 Z" class="f-cream" />
       <path d="M34 58 q6 -8 12 0 t12 0 t12 0 t12 0" class="thin" />
       <circle cx="80" cy="52" r="9" class="f-paper" />
-      <circle cx="80" cy="52" r="4" class="f-orange" />
-      <path d="M44 98 H76 L72 108 H48 Z" class="f-orange" />
-      <path d="M14 62 H106 Q106 98 60 100 Q14 98 14 62 Z" class="f-orange" />
+      <circle cx="80" cy="52" r="4" class="f-primary" />
+      <path d="M44 98 H76 L72 108 H48 Z" class="f-primary" />
+      <path d="M14 62 H106 Q106 98 60 100 Q14 98 14 62 Z" class="f-primary" />
       <path d="M26 76 q8 -7 17 0 t17 0 t17 0 t17 0" class="thin" />
     </g>
 
@@ -25,7 +25,7 @@ defineProps({
       <path d="M22 62 Q22 28 60 28 Q98 28 98 62 Z" class="f-paper" />
       <path d="M40 44 l4 -3 M56 38 l4 2 M48 54 l4 -2 M66 52 l3 3" class="thin" />
       <circle cx="76" cy="44" r="10" class="f-accent" />
-      <circle cx="76" cy="44" r="4" class="f-orange" />
+      <circle cx="76" cy="44" r="4" class="f-primary" />
       <path d="M44 98 H76 L72 108 H48 Z" class="f-cream" />
       <path d="M14 62 H106 Q106 98 60 100 Q14 98 14 62 Z" class="f-cream" />
       <path d="M30 74 H90 M38 84 H82" class="thin" />
@@ -43,27 +43,27 @@ defineProps({
     <!-- Pizza slice -->
     <g v-else-if="kind === 'pizza'">
       <path d="M24 42 Q60 24 96 42 L60 108 Z" class="f-accent" />
-      <path d="M16 30 Q60 8 104 30 L96 44 Q60 24 24 44 Z" class="f-orange" />
-      <circle cx="50" cy="56" r="8" class="f-orange" />
-      <circle cx="72" cy="60" r="7" class="f-orange" />
-      <circle cx="60" cy="82" r="6" class="f-orange" />
+      <path d="M16 30 Q60 8 104 30 L96 44 Q60 24 24 44 Z" class="f-primary" />
+      <circle cx="50" cy="56" r="8" class="f-primary" />
+      <circle cx="72" cy="60" r="7" class="f-primary" />
+      <circle cx="60" cy="82" r="6" class="f-primary" />
     </g>
 
     <!-- Taco -->
     <g v-else-if="kind === 'taco'">
-      <circle cx="34" cy="54" r="10" class="f-orange" />
+      <circle cx="34" cy="54" r="10" class="f-primary" />
       <circle cx="60" cy="44" r="11" class="f-paper" />
-      <circle cx="86" cy="54" r="10" class="f-orange" />
+      <circle cx="86" cy="54" r="10" class="f-primary" />
       <path d="M12 90 A48 48 0 0 1 108 90 Z" class="f-accent" />
       <path d="M26 90 A34 34 0 0 1 94 90" class="thin" />
     </g>
 
     <!-- Burger -->
     <g v-else-if="kind === 'burger'">
-      <path d="M20 82 H100 V88 Q100 100 88 100 H32 Q20 100 20 88 Z" class="f-orange" />
+      <path d="M20 82 H100 V88 Q100 100 88 100 H32 Q20 100 20 88 Z" class="f-primary" />
       <rect x="14" y="64" width="92" height="16" rx="8" class="f-ink" />
       <path d="M16 58 H104 L96 70 L86 62 L76 72 L64 62 L52 72 L40 62 L28 70 Z" class="f-accent" />
-      <path d="M18 58 Q18 22 60 22 Q102 22 102 58 Z" class="f-orange" />
+      <path d="M18 58 Q18 22 60 22 Q102 22 102 58 Z" class="f-primary" />
       <path d="M44 38 l5 -2 M60 32 l5 1 M74 40 l5 -1" class="thin" />
     </g>
 
@@ -84,7 +84,7 @@ defineProps({
   height: 100%;
   overflow: visible;
   /* Inherited by every shape: thick ink outline, no fill unless a class adds one */
-  stroke: var(--ink);
+  stroke: var(--color-ink);
   stroke-width: 5;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -94,9 +94,9 @@ defineProps({
 .thick { stroke-width: 6; }
 .thin { stroke-width: 3.5; }
 
-.f-orange { fill: var(--orange); }
-.f-accent { fill: var(--accent); }
-.f-cream { fill: var(--cream); }
-.f-paper { fill: var(--paper); }
-.f-ink { fill: var(--ink); }
+.f-primary { fill: var(--color-primary); }
+.f-accent { fill: var(--color-accent); }
+.f-cream { fill: var(--color-bg); }
+.f-paper { fill: var(--color-card); }
+.f-ink { fill: var(--color-ink); }
 </style>

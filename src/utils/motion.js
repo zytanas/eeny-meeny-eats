@@ -5,7 +5,7 @@ export function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 }
 
-// Reads a design token from :root, e.g. cssVar('--orange')
+// Reads a design token from :root, e.g. cssVar('--color-primary')
 export function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
@@ -15,7 +15,7 @@ export function cssVar(name) {
 export async function celebrate() {
   if (prefersReducedMotion()) return
   const { default: confetti } = await import('canvas-confetti')
-  const colors = ['--orange', '--accent', '--cream', '--ink'].map(cssVar)
+  const colors = ['--color-primary', '--color-accent', '--color-bg', '--color-ink'].map(cssVar)
   const shared = { particleCount: 60, spread: 70, startVelocity: 45, colors, zIndex: 2000, disableForReducedMotion: true }
   confetti({ ...shared, angle: 60, origin: { x: 0, y: 0.65 } })
   confetti({ ...shared, angle: 120, origin: { x: 1, y: 0.65 } })

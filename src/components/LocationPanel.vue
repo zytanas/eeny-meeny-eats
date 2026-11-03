@@ -105,13 +105,13 @@ defineExpose({ open, close })
 .location-panel {
   padding: 0;
   border: var(--outline-thick);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--color-card);
+  color: var(--color-ink);
   overflow: visible;
 }
 
 .location-panel::backdrop {
-  background: rgb(20 20 20 / 0.45);
+  background: var(--color-scrim);
 }
 
 .panel {
@@ -126,7 +126,7 @@ defineExpose({ open, close })
   margin: auto 0 0;
   border-bottom: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: 0 -6px 0 var(--ink);
+  box-shadow: 0 -6px 0 var(--color-ink);
   overflow-y: auto;
 }
 
@@ -144,7 +144,7 @@ defineExpose({ open, close })
   height: 5px;
   margin: 0 auto 0.75rem;
   border-radius: var(--radius-pill);
-  background: var(--ink);
+  background: var(--color-ink);
   opacity: 0.35;
 }
 
@@ -164,7 +164,7 @@ defineExpose({ open, close })
 }
 
 .is-dropdown::backdrop {
-  background: rgb(20 20 20 / 0.15);
+  background: color-mix(in srgb, var(--color-ink) 15%, transparent);
 }
 
 .is-dropdown[open] {
@@ -193,7 +193,7 @@ defineExpose({ open, close })
   height: 44px;
   border: var(--outline);
   border-radius: 50%;
-  background: var(--cream);
+  background: var(--color-bg);
   box-shadow: var(--shadow-sm);
   font-weight: 800;
   cursor: pointer;
@@ -214,7 +214,7 @@ defineExpose({ open, close })
 }
 
 .current strong {
-  color: var(--ink);
+  color: var(--color-ink);
 }
 
 @keyframes sheet-up {

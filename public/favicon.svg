@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <!-- Placeholder icon -->
-  <rect width="64" height="64" rx="14" fill="#ffc72c"/>
-  <circle cx="32" cy="32" r="17" fill="#d7301f" stroke="#141414" stroke-width="4"/>
-  <circle cx="32" cy="32" r="5" fill="#141414"/>
+  <rect width="64" height="64" rx="14" fill="#ffd56b"/>
+  <circle cx="32" cy="32" r="17" fill="#ea6686" stroke="#3a2621" stroke-width="4"/>
+  <circle cx="32" cy="32" r="5" fill="#3a2621"/>
 </svg>
