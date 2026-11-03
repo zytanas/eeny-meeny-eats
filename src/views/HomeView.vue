@@ -45,7 +45,7 @@ const copy = {
     headline: 'How it works',
     // Each step's sticker is set in `howItWorksSteps` below
     steps: [
-      { title: 'Share your location', text: 'Or type any city or area.' },
+      { title: 'Share your location', text: 'Or type a street or landmark, plus the city.' },
       { title: "Explore what's near", text: 'Browse places on the map and list.' },
       { title: 'Bahala na!', text: 'Still stuck? Let us pick for you.' },
     ],
@@ -53,11 +53,13 @@ const copy = {
 }
 
 // Area chips under the input. Tapping one searches that area right away.
-// Ordered Luzon, then Visayas, then Mindanao.
+// The search covers ~2 km, so these are specific spots ("place, city"), not whole cities.
+// Each was checked to geocode to the right place. Ordered Luzon, then Visayas, then Mindanao.
 const quickPickAreas = [
-  'Makati', 'BGC', 'Tagaytay', 'La Union', 'Baguio', 'Pampanga', 'Vigan',
-  'Cebu City', 'Iloilo City', 'Bacolod',
-  'Davao City', 'Cagayan de Oro',
+  'Tomas Morato, Quezon City', 'Legazpi Village, Makati', 'BGC, Taguig', 'Kapitolyo, Pasig',
+  'Session Road, Baguio', 'Tagaytay Rotonda', 'Urbiztondo, San Juan, La Union', 'Calle Crisologo, Vigan',
+  'IT Park, Cebu City', 'Smallville, Iloilo City', 'Lacson Street, Bacolod',
+  'Lanang, Davao City', 'Divisoria, Cagayan de Oro',
 ]
 // Only the first few show until "More areas" is tapped, so the card stays short
 const QUICK_PICKS_SHOWN = 6

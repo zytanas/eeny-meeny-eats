@@ -172,7 +172,6 @@ function reroll() {
             <ul class="reel-strip" aria-hidden="true">
               <li v-for="(name, i) in reelItems" :key="i">{{ name }}</li>
             </ul>
-            <span class="reel-hint" aria-hidden="true">{{ copy.tapToSkip }}</span>
           </button>
 
           <PlaceCard v-else-if="phase === 'landed' && place" :key="`card-${place.id}`" :place="place" class="pick-card" />
@@ -303,22 +302,6 @@ function reroll() {
   text-transform: uppercase;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.reel-hint {
-  position: absolute;
-  right: 0.6rem;
-  bottom: 0.5rem;
-  z-index: 2;
-  padding: 0 0.5rem;
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-bg);
-  font-size: 0.7rem;
-  font-weight: 800;
-  line-height: 1.5;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* ---------- Result ---------- */

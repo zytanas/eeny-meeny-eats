@@ -69,8 +69,8 @@ export const useLocationStore = defineStore('location', {
             this.status = err.code === err.PERMISSION_DENIED ? 'denied' : 'error'
             this.error =
               err.code === err.PERMISSION_DENIED
-                ? 'Location access was denied. Type a city or area instead.'
-                : 'Could not get your location. Type a city or area instead.'
+                ? 'Location access was denied. Type a street or landmark instead.'
+                : 'Could not get your location. Type a street or landmark instead.'
             resolve(false)
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },

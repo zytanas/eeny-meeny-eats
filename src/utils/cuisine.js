@@ -4,7 +4,7 @@
 const ART_KEYWORDS = {
   noodles: ['japanese', 'ramen', 'vietnamese', 'pho', 'chinese', 'thai', 'noodle'],
   rice: ['filipino', 'korean', 'indian', 'rice', 'asian'],
-  coffee: ['cafe', 'café', 'coffee', 'tea', 'bakery', 'dessert'],
+  coffee: ['cafe', 'café', 'coffee', 'tea', 'bakery', 'dessert', 'ice cream'],
   pizza: ['italian', 'pizza', 'pasta'],
   taco: ['mexican', 'taco', 'latin'],
   burger: ['american', 'burger', 'fast food', 'bbq', 'grill', 'steak', 'chicken'],

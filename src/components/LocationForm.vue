@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useLocationStore } from '@/stores/location'
+import { DEFAULT_DISTANCE_KM } from '@/stores/filters'
 
 // Shared by Home's location step and Explore's "change location" panel.
 // Emits `located` once the store has new coordinates; the parent decides what happens next.
@@ -18,8 +19,9 @@ const copy = {
   useLocation: 'Use my location',
   locating: 'Finding you…',
   divider: 'or',
-  areaLabel: 'Type a city or area',
-  areaPlaceholder: 'Makati, BGC, Quezon City',
+  areaLabel: 'Type a street, barangay, or landmark',
+  areaPlaceholder: 'Tomas Morato, Quezon City',
+  areaHint: (km) => `We look within ${km} km of this spot, so be specific: add the city, like a short address.`,
   searchArea: 'Search this area',
   searchingArea: 'Looking it up…',
 }
@@ -72,10 +74,11 @@ async function search(text) {
         v-model="area"
         type="text"
         :placeholder="copy.areaPlaceholder"
-        autocomplete="address-level2"
+        autocomplete="street-address"
         :aria-invalid="location.error ? 'true' : undefined"
-        :aria-describedby="location.error ? `${idPrefix}-error` : undefined"
+        :aria-describedby="location.error ? `${idPrefix}-hint ${idPrefix}-error` : `${idPrefix}-hint`"
       />
+      <p :id="`${idPrefix}-hint`" class="area-hint">{{ copy.areaHint(DEFAULT_DISTANCE_KM) }}</p>
       <!-- e.g. area chips; `search` runs the lookup straight away -->
       <slot name="after-input" :search="search" :busy="busy" />
       <button class="btn btn-secondary btn-block area-btn" type="submit" :disabled="!area.trim() || busy">
@@ -158,6 +161,13 @@ async function search(text) {
 .area-form input::placeholder {
   color: var(--color-muted);
   font-weight: 500;
+}
+
+.area-hint {
+  margin: -0.2rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .area-form input[aria-invalid='true'] {

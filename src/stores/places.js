@@ -5,8 +5,9 @@ import { useFiltersStore } from './filters'
 
 export const usePlacesStore = defineStore('places', {
   state: () => ({
-    places: [], // raw places from /api/nearby
-    loadedFor: null, // key of the location the places were loaded for
+    places: [], // raw places from /api/nearby, already limited to radiusKm
+    radiusKm: null, // radius the server actually searched (it widens when the chosen distance finds too few)
+    loadedFor: null, // key of the location and distance the places were loaded for
     loading: false,
     error: null,
     lastPickId: null,
@@ -32,13 +33,13 @@ export const usePlacesStore = defineStore('places', {
     hasRatings: (state) => state.places.some((p) => p.rating != null),
     hasPrices: (state) => state.places.some((p) => p.priceLevel != null),
 
-    // Single source of truth for both the list/map and the randomizer
+    // Single source of truth for both the list/map and the randomizer.
+    // Distance is applied by the server (see loadNearby), so it isn't filtered again here.
     filteredPlaces() {
       const f = useFiltersStore()
       const result = this.placesWithDistance.filter(
         (p) =>
           (!f.cuisines.length || f.cuisines.includes(p.cuisine)) &&
-          p.distanceKm <= f.maxDistanceKm &&
           (!f.priceLevels.length || f.priceLevels.includes(p.priceLevel)) &&
           (!f.openNow || p.openNow),
       )
@@ -59,14 +60,16 @@ export const usePlacesStore = defineStore('places', {
   actions: {
     async loadNearby({ force = false } = {}) {
       const location = useLocationStore()
-      const key = `${location.center.lat},${location.center.lon}`
+      const { maxDistanceKm } = useFiltersStore()
+      const key = `${location.center.lat},${location.center.lon}|${maxDistanceKm}`
       if (!force && this.loadedFor === key && this.places.length) return
 
       this.loading = true
       this.error = null
       try {
-        const data = await fetchNearby(location.center)
+        const data = await fetchNearby({ ...location.center, radiusKm: maxDistanceKm })
         this.places = data.places ?? []
+        this.radiusKm = data.radiusKm ?? maxDistanceKm
         this.loadedFor = key
       } catch (err) {
         this.error = err.message

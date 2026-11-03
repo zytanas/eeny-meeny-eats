@@ -13,9 +13,13 @@ async function request(path, options = {}) {
   return data
 }
 
-/** Nearby restaurants and cafes around a point. tz lets the server work out "open now" in local time. */
-export function fetchNearby({ lat, lon }) {
-  const params = new URLSearchParams({ lat, lon })
+/**
+ * Nearby food places around a point, starting at radiusKm. The server widens the search when
+ * it finds too few, and returns the radius it actually used as `radiusKm`.
+ * tz lets the server work out "open now" in local time.
+ */
+export function fetchNearby({ lat, lon, radiusKm }) {
+  const params = new URLSearchParams({ lat, lon, radius: radiusKm })
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
   if (tz) params.set('tz', tz)
   return request(`nearby?${params}`)

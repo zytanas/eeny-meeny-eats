@@ -11,7 +11,6 @@ import FilterPanel from '@/components/FilterPanel.vue'
 import FilterSheet from '@/components/FilterSheet.vue'
 import SortControl from '@/components/SortControl.vue'
 import RandomizerButton from '@/components/RandomizerButton.vue'
-import MarqueeStrip from '@/components/MarqueeStrip.vue'
 import LocationPanel from '@/components/LocationPanel.vue'
 
 // Layout by breakpoint:
@@ -42,15 +41,15 @@ const announcement = ref('')
 
 onMounted(() => places.loadNearby())
 
-// A new location (from the panel) reloads the list; the map recenters itself on the new center.
-// Filters live in their own store, so they carry over untouched.
+// A new location (from the panel) or distance reloads the list; the map recenters itself on the
+// new center. Other filters live in their own store, so they carry over untouched.
 watch(
-  () => location.center,
+  () => [location.center, filters.maxDistanceKm],
   async () => {
     await places.loadNearby()
     announcement.value = places.error
       ? ''
-      : `Showing ${places.filteredPlaces.length} places near ${location.label}`
+      : `Showing ${places.filteredPlaces.length} places within ${places.radiusKm} km of ${location.label}`
   },
 )
 
@@ -95,25 +94,31 @@ function openPlace(id) {
       @select="openPlace"
     />
 
-    <MarqueeStrip class="explore-marquee" tone="ink" />
-
     <div class="explore-side">
       <section class="explore-panel">
         <div class="toolbar">
           <h1 class="summary display">
-            <span class="summary-count">{{ places.filteredPlaces.length }}</span>
-            places near
-            <button
-              ref="changeLocationBtn"
-              type="button"
-              class="change-location"
-              aria-haspopup="dialog"
-              aria-controls="location-panel"
-              :aria-expanded="panelOpen"
-              @click="openLocationPanel"
-            >
-              <span class="location-name">{{ location.label }}</span>{{ ' ' }}<span class="change-tag"><span aria-hidden="true">✎</span> Change</span>
-            </button>
+            <!-- Two lines: "183 places within 2 km" / "of <location> ✎ Change". "of" sits inside the
+                 button because a button always wraps as one box; outside, it would strand on its own line.
+                 The nbsp keeps "2 km" together. -->
+            <span class="summary-line">
+              <span class="summary-count">{{ places.filteredPlaces.length }}</span>
+              {{ places.radiusKm ? `places within ${places.radiusKm} km` : 'places' }}
+            </span>
+            <span class="summary-line summary-where">
+              <button
+                ref="changeLocationBtn"
+                type="button"
+                class="change-location"
+                aria-haspopup="dialog"
+                aria-controls="location-panel"
+                :aria-expanded="panelOpen"
+                @click="openLocationPanel"
+              >
+                {{ places.radiusKm ? 'of' : 'near' }}
+                <span class="location-name">{{ location.label }}</span>{{ ' ' }}<span class="change-tag"><span aria-hidden="true">✎</span> Change</span>
+              </button>
+            </span>
           </h1>
           <LocationPanel ref="locationPanel" @open-change="panelOpen = $event" />
           <p class="visually-hidden" aria-live="polite">{{ announcement }}</p>
@@ -233,15 +238,8 @@ function openPlace(id) {
   border-bottom: var(--outline);
 }
 
-.show-map .explore-marquee,
 .show-map .explore-panel {
   display: none;
-}
-
-/* Slim ticker so the list below stays the focus */
-.explore-marquee {
-  padding-block: 0.4rem;
-  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.15rem);
 }
 
 .explore-panel {
@@ -262,6 +260,14 @@ function openPlace(id) {
   margin: 0 0 0.25rem;
   font-size: clamp(1.6rem, 1.3rem + 1.5vw, 2.2rem);
   overflow-wrap: anywhere; /* long area names can't push the page sideways */
+}
+
+.summary-line {
+  display: block;
+}
+
+.summary-where {
+  margin-top: 0.15em;
 }
 
 /* Count as a strawberry sticker */
@@ -390,10 +396,9 @@ function openPlace(id) {
     display: block;
     flex: none;
     height: clamp(200px, 40dvh, 520px);
-    border-bottom: 0;
+    border-bottom: var(--outline);
   }
 
-  .show-map .explore-marquee,
   .show-map .explore-panel {
     display: block;
   }
@@ -416,15 +421,11 @@ function openPlace(id) {
     overflow: hidden;
   }
 
-  .explore-marquee,
-  .show-map .explore-marquee {
-    display: none; /* the map sits beside the list here, so there's no seam to fill */
-  }
-
   .explore-map,
   .show-map .explore-map {
     height: auto; /* stretches to the grid row */
     border-right: var(--outline);
+    border-bottom: 0;
   }
 
   .explore-side {

@@ -1,5 +1,5 @@
 // Thin wrappers around the Geoapify APIs. The API key never leaves the server.
-import { COUNTRY_FILTER, PLACE_CATEGORIES, RESULT_LIMIT } from './config.js'
+import { COUNTRY_FILTER, DUPLICATE_DISTANCE_M, PLACE_CATEGORIES, RESULT_LIMIT } from './config.js'
 
 const BASE = 'https://api.geoapify.com'
 
@@ -22,7 +22,7 @@ async function get(path, params) {
   return res.json()
 }
 
-// Restaurants and cafes within radiusM of a point, nearest first
+// Named food places within radiusM of a point, nearest first, with duplicates removed
 export async function fetchPlaces({ lat, lon, radiusM }) {
   const data = await get('/v2/places', {
     categories: PLACE_CATEGORIES.join(','),
@@ -30,7 +30,30 @@ export async function fetchPlaces({ lat, lon, radiusM }) {
     bias: `proximity:${lon},${lat}`,
     limit: RESULT_LIMIT,
   })
-  return (data.features ?? []).map((f) => normalizePlace(f.properties)).filter(Boolean)
+  return dedupe((data.features ?? []).map((f) => normalizePlace(f.properties)).filter(Boolean))
+}
+
+// OpenStreetMap often maps one spot twice (e.g. as a building and as a point inside it).
+// Same name within DUPLICATE_DISTANCE_M counts as one; the copy with more details wins.
+function dedupe(places) {
+  const kept = []
+  for (const place of places) {
+    const key = place.name.trim().toLowerCase()
+    const i = kept.findIndex((k) => k.name.trim().toLowerCase() === key && metersBetween(k, place) <= DUPLICATE_DISTANCE_M)
+    if (i === -1) kept.push(place)
+    else if (detailScore(place) > detailScore(kept[i])) kept[i] = place
+  }
+  return kept
+}
+
+const detailScore = (p) => (p.openingHours ? 1 : 0) + (p.website ? 1 : 0)
+
+// Equirectangular approximation; plenty accurate at duplicate-checking distances
+function metersBetween(a, b) {
+  const toRad = (deg) => (deg * Math.PI) / 180
+  const x = toRad(b.lon - a.lon) * Math.cos(toRad((a.lat + b.lat) / 2))
+  const y = toRad(b.lat - a.lat)
+  return Math.hypot(x, y) * 6371000
 }
 
 // First match for a typed city/area, limited to COUNTRY_FILTER when set
@@ -49,8 +72,9 @@ function normalizePlace(p) {
   return {
     id: p.place_id,
     name: p.name,
+    brand: p.brand ?? p.datasource?.raw?.brand ?? null, // used to spot chains
     cuisine: cuisineLabel(p.categories ?? []),
-    category: p.categories?.includes('catering.cafe') ? 'cafe' : 'restaurant',
+    category: placeCategory(p.categories ?? []),
     lat: p.lat,
     lon: p.lon,
     address: p.address_line2 || p.formatted || '',
@@ -79,12 +103,31 @@ const CUISINE_LABELS = {
   hongkong: 'Hong Kong',
 }
 
-// "catering.restaurant.steak_house" -> "Steak House"; plain categories -> "Restaurant" / "Cafe"
+// Geoapify category -> our category and its fallback cuisine label. Checked in order, so a
+// bakery that's also tagged as a cafe counts as a bakery.
+const PLACE_KINDS = [
+  { prefix: 'commercial.food_and_drink.bakery', category: 'bakery', label: 'Bakery' },
+  { prefix: 'catering.ice_cream', category: 'ice_cream', label: 'Ice Cream' },
+  { prefix: 'catering.food_court', category: 'food_court', label: 'Food Court' },
+  { prefix: 'catering.fast_food', category: 'fast_food', label: 'Fast Food' },
+  { prefix: 'catering.cafe', category: 'cafe', label: 'Cafe' },
+  { prefix: 'catering.restaurant', category: 'restaurant', label: 'Restaurant' },
+]
+
+function placeKind(categories) {
+  return PLACE_KINDS.find((k) => categories.includes(k.prefix)) ?? PLACE_KINDS.at(-1)
+}
+
+function placeCategory(categories) {
+  return placeKind(categories).category
+}
+
+// "catering.restaurant.steak_house" -> "Steak House"; plain categories -> "Restaurant", "Cafe", "Bakery", ...
 function cuisineLabel(categories) {
-  const specific = categories.find((c) => /^catering\.(restaurant|cafe)\.[^.]+$/.test(c))
+  const specific = categories.find((c) => /^catering\.(restaurant|cafe|fast_food)\.[^.]+$/.test(c))
   if (specific) {
     const key = specific.split('.').pop()
     return CUISINE_LABELS[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (ch) => ch.toUpperCase())
   }
-  return categories.includes('catering.cafe') ? 'Cafe' : 'Restaurant'
+  return placeKind(categories).label
 }
