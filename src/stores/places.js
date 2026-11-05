@@ -7,6 +7,7 @@ export const usePlacesStore = defineStore('places', {
   state: () => ({
     places: [], // raw places from /api/nearby, already limited to radiusKm
     radiusKm: null, // radius the server actually searched (it widens when the chosen distance finds too few)
+    requestedRadiusKm: null, // radius that search started from
     loadedFor: null, // key of the location and distance the places were loaded for
     loading: false,
     error: null,
@@ -32,6 +33,15 @@ export const usePlacesStore = defineStore('places', {
     // Rating and price aren't in the current data source, so their UI hides when missing
     hasRatings: (state) => state.places.some((p) => p.rating != null),
     hasPrices: (state) => state.places.some((p) => p.priceLevel != null),
+
+    // Radius the map draws: the one the server used, or the one just picked while its search runs
+    searchRadiusKm(state) {
+      const { maxDistanceKm } = useFiltersStore()
+      return state.loading || state.error || state.radiusKm == null ? maxDistanceKm : state.radiusKm
+    },
+
+    // The server had to look further than the chosen distance to find enough places
+    widened: (state) => !state.loading && !state.error && state.radiusKm > state.requestedRadiusKm,
 
     // Single source of truth for both the list/map and the randomizer.
     // Distance is applied by the server (see loadNearby), so it isn't filtered again here.
@@ -70,6 +80,7 @@ export const usePlacesStore = defineStore('places', {
         const data = await fetchNearby({ ...location.center, radiusKm: maxDistanceKm })
         this.places = data.places ?? []
         this.radiusKm = data.radiusKm ?? maxDistanceKm
+        this.requestedRadiusKm = data.requestedRadiusKm ?? maxDistanceKm
         this.loadedFor = key
       } catch (err) {
         this.error = err.message

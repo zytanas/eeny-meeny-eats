@@ -6,6 +6,7 @@ import { usePlacesStore } from '@/stores/places'
 import { useFiltersStore } from '@/stores/filters'
 import { MEDIA, useMediaQuery } from '@/utils/breakpoints'
 import MapView from '@/components/MapView.vue'
+import MapRadiusControl from '@/components/MapRadiusControl.vue'
 import PlaceList from '@/components/PlaceList.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterSheet from '@/components/FilterSheet.vue'
@@ -41,15 +42,18 @@ const announcement = ref('')
 
 onMounted(() => places.loadNearby())
 
-// A new location (from the panel) or distance reloads the list; the map recenters itself on the
-// new center. Other filters live in their own store, so they carry over untouched.
+// A new location (from the panel) or distance (from the filters or the map's radius chips) reloads
+// the list; the map redraws its search circle and zooms to it. Other filters live in their own store, so they carry over untouched.
 watch(
   () => [location.center, filters.maxDistanceKm],
   async () => {
     await places.loadNearby()
-    announcement.value = places.error
-      ? ''
-      : `Showing ${places.filteredPlaces.length} places within ${places.radiusKm} km of ${location.label}`
+    if (places.error) {
+      announcement.value = ''
+      return
+    }
+    const widened = places.widened ? `Widened to ${places.radiusKm} km to find more places. ` : ''
+    announcement.value = `${widened}Showing ${places.filteredPlaces.length} places within ${places.radiusKm} km of ${location.label}`
   },
 )
 
@@ -91,8 +95,13 @@ function openPlace(id) {
       class="explore-map"
       :center="location.center"
       :places="places.filteredPlaces"
+      :radius-km="places.searchRadiusKm"
+      :center-label="location.area || (location.hasLocation ? 'You are here' : location.label)"
+      :bottom-inset="isDesktop ? 104 : 0"
       @select="openPlace"
-    />
+    >
+      <MapRadiusControl />
+    </MapView>
 
     <div class="explore-side">
       <section class="explore-panel">

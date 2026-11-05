@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 
 // km. The chosen distance is the server's starting radius; it widens the search (up to
-// RADIUS_STEPS_KM in netlify/lib/config.js) when too few places are found
-export const DISTANCE_OPTIONS = [1, 2, 3, 5]
+// RADIUS_STEPS_KM in netlify/lib/config.js) when too few places are found.
+// Shared by the filter panel and the radius chips on the map.
+export const DISTANCE_OPTIONS = [1, 2, 5]
 export const DEFAULT_DISTANCE_KM = 2
 export const PRICE_LEVELS = [1, 2, 3, 4] // rendered as $ to $$$$
 export const SORT_OPTIONS = [
