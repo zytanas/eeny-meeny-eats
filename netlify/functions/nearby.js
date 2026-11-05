@@ -11,13 +11,13 @@
 import {
   CACHE_COORD_DECIMALS,
   CACHE_TTL_HOURS,
-  CHAIN_BLOCKLIST,
   DEFAULT_RADIUS_KM,
   DEFAULT_TIMEZONE,
   HIDE_CHAINS,
   MIN_RESULTS,
   RADIUS_STEPS_KM,
 } from '../lib/config.js'
+import { isChain } from '../lib/chains.js'
 import { fetchPlaces, GeoapifyError } from '../lib/geoapify.js'
 import { getSupabase } from '../lib/supabase.js'
 import { isOpenNow, isValidTimeZone } from '../lib/openNow.js'
@@ -80,27 +80,6 @@ async function placesWithin(lat, lon, radiusKm) {
   const places = await fetchPlaces({ lat, lon, radiusM: radiusKm * 1000 })
   await writeCache(areaKey, places)
   return { places, source: 'geoapify' }
-}
-
-// "Dunkin' Donuts" -> "dunkin donuts", "7-Eleven" -> "7 eleven", "Café" -> "cafe"
-function normalizeName(text) {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/['’`]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
-const CHAIN_TERMS = CHAIN_BLOCKLIST.map(normalizeName).filter(Boolean)
-
-function isChain(place) {
-  return [place.name, place.brand].some((text) => {
-    if (!text) return false
-    const padded = ` ${normalizeName(text)} `
-    return CHAIN_TERMS.some((term) => padded.includes(` ${term} `))
-  })
 }
 
 // Cache problems never break the response; we just fetch fresh data instead
