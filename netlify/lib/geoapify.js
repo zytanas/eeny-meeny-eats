@@ -11,11 +11,18 @@ const NEARBY_KM = 30 // a match this close to the bias point beats any farther o
 const SAME_PLACE_M = 200 // matches this close to a better-ranked one count as the same place
 const MAX_ALTERNATIVES = 4 // "Not the right spot?" chips
 
-export class GeoapifyError extends Error {}
+// `message` is technical (logs, the response's `error` field). `userMessage`, when set, is
+// written for people and is what the app shows; without it the app shows a generic message.
+export class GeoapifyError extends Error {
+  constructor(message, { userMessage = null } = {}) {
+    super(message)
+    this.userMessage = userMessage
+  }
+}
 
 function apiKey() {
   const key = process.env.GEOAPIFY_API_KEY?.trim()
-  if (!key) throw new GeoapifyError('Server is missing GEOAPIFY_API_KEY')
+  if (!key) throw new GeoapifyError('Server is missing GEOAPIFY_API_KEY') // ours to fix, not the user's
   return key
 }
 
@@ -23,9 +30,12 @@ async function get(path, params) {
   const url = `${BASE}${path}?${new URLSearchParams({ ...params, apiKey: apiKey() })}`
   const res = await fetch(url)
   if (!res.ok) {
-    // Log status only; the URL contains the API key
-    console.error(`Geoapify ${path} failed with ${res.status}`)
-    throw new GeoapifyError('The places service is unavailable right now. Please try again.')
+    // Status only; the URL contains the API key
+    const message = `Geoapify ${path} failed with ${res.status}`
+    console.error(message)
+    throw new GeoapifyError(message, {
+      userMessage: 'The places service is unavailable right now. Please try again.',
+    })
   }
   return res.json()
 }

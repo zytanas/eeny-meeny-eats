@@ -14,6 +14,9 @@ const props = defineProps({
 
 const emit = defineEmits(['located'])
 
+// Matches the limit in netlify/functions/geocode.js, so normal typing never hits its error
+const MAX_AREA_LENGTH = 200
+
 // All text for the form, in one place for easy editing
 const copy = {
   useLocation: 'Use my location',
@@ -73,6 +76,7 @@ async function search(text) {
         :id="inputId"
         v-model="area"
         type="text"
+        :maxlength="MAX_AREA_LENGTH"
         :placeholder="copy.areaPlaceholder"
         autocomplete="street-address"
         :aria-invalid="location.error ? 'true' : undefined"

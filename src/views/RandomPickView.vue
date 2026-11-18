@@ -139,10 +139,11 @@ function reroll() {
     <MarqueeStrip :items="pickMarqueeItems" tone="accent" reverse />
 
     <section class="container pick">
+      <!-- The page's main heading; styled by .eyebrow/.display, not the h1 tag -->
       <Transition name="fade" mode="out-in">
-        <p :key="phase" class="eyebrow display">
+        <h1 :key="phase" class="eyebrow display">
           {{ phase === 'spinning' ? copy.spinning : copy.landed }}
-        </p>
+        </h1>
       </Transition>
 
       <div ref="stageEl" class="stage">

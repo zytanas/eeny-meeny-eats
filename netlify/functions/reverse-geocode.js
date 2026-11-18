@@ -19,6 +19,6 @@ export default async (req) => {
   } catch (err) {
     const message = err instanceof GeoapifyError ? err.message : 'Could not name this spot'
     if (!(err instanceof GeoapifyError)) console.error(err)
-    return Response.json({ error: message }, { status: 502 })
+    return Response.json({ error: message, userMessage: err.userMessage ?? undefined }, { status: 502 })
   }
 }

@@ -2,6 +2,9 @@
 //
 // Saves a user's problem report about a place to Supabase `reports`
 // (service role on the server; RLS blocks any direct browser access).
+//
+// Errors: `error` is technical; `userMessage` is set only when the text is written for people.
+// Validation errors stay technical: the form already stops those requests from being sent.
 import { getSupabase } from '../lib/supabase.js'
 
 const REPORT_TYPES = ['closed', 'wrong_info', 'wrong_location', 'other']
@@ -33,15 +36,22 @@ export default async (req) => {
 
   const db = getSupabase()
   if (!db) {
-    return Response.json({ error: 'Reports are unavailable right now.' }, { status: 503 })
+    return Response.json(
+      { error: 'Supabase is not configured', userMessage: 'Reports are unavailable right now.' },
+      { status: 503 },
+    )
   }
 
   const { error } = await db
     .from('reports')
     .insert({ place_id: placeId, report_type: reportType, message: text || null })
   if (error) {
+    // The database's own message stays in the server log
     console.error('reports insert failed:', error.message)
-    return Response.json({ error: "Couldn't send your report. Please try again." }, { status: 500 })
+    return Response.json(
+      { error: 'reports insert failed', userMessage: "Couldn't send your report. Please try again." },
+      { status: 500 },
+    )
   }
 
   return Response.json({ ok: true }, { status: 201 })

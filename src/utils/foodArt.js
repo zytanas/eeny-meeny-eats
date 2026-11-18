@@ -43,6 +43,8 @@ const CUISINE_RULES = [
 
   [['mexican', 'taco', 'tacos', 'burrito', 'burritos', 'tex-mex', 'latin'], 'taco'],
   [['sisig', 'filipino'], 'sisig'],
+  // "Steak House" lands here via "steak". Keep it on barbecue in Phase 2b: the old
+  // CuisineArt (utils/cuisine.js) shows a burger for it, but the new art should be barbecue.
   [['barbecue', 'bbq', 'grill', 'inasal', 'steak'], 'barbecue'],
   [['cafe', 'café', 'coffee', 'tea', 'milk tea', 'juice'], 'icedCoffee'],
   // TEMPORARY until the ice cream art lands (Phase 2b): the nearest cold treat

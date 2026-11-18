@@ -230,7 +230,7 @@ function openPlace(id) {
               </ul>
             </div>
             <p v-else-if="places.error" key="error" class="error status" role="alert">
-              {{ places.error }}
+              <span class="status-text">{{ places.error }}</span>
               <button class="btn btn-secondary" @click="places.loadNearby({ force: true })">Retry</button>
             </p>
             <PlaceList v-else key="list" :places="places.filteredPlaces" />
@@ -664,6 +664,12 @@ function openPlace(id) {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* The message grows and wraps inside its own box, so the ⚠ stays beside it and only
+   Retry drops to the next line when space runs out */
+.status-text {
+  flex: 1 1 12rem;
 }
 
 /* Fixed to the bottom of the screen, clear of the notch/home indicator.

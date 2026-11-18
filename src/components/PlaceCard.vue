@@ -34,7 +34,8 @@ function onCardClick(event) {
     </div>
 
     <div class="body">
-      <h3 class="name">{{ place.name }}</h3>
+      <!-- h2: cards sit directly under the page's h1 (Explore summary, Pick headline) -->
+      <h2 class="name">{{ place.name }}</h2>
       <p class="stats">
         <template v-if="place.rating != null">
           <span class="rating" :aria-label="`Rated ${place.rating.toFixed(1)} from ${place.ratingCount} Google reviews`">

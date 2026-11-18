@@ -1,14 +1,34 @@
 // Frontend helpers for our Netlify Functions.
 // The browser never calls Geoapify or Google directly; API keys stay server-side.
 
+// What people see when a request fails. Every error thrown from here has a message that's
+// safe to show as-is; the technical detail goes to the console instead.
+const copy = {
+  offline: 'You seem to be offline. Check your connection and try again.',
+  server: 'Something went wrong on our end. Try again in a moment.',
+}
+
 async function request(path, options = {}) {
-  const res = await fetch(`/api/${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
+  let res
+  try {
+    res = await fetch(`/api/${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    })
+  } catch (err) {
+    // fetch only throws when no response arrived at all: offline, DNS, dropped connection.
+    // Browsers word it differently ("Failed to fetch", "Load failed", "NetworkError ...").
+    console.error(`[api] ${path}: network error`, err)
+    throw new Error(copy.offline, { cause: err })
+  }
+
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`)
+    console.error(`[api] ${path}: ${res.status}`, data.error ?? '(no message)')
+    // Our functions put text written for people in `userMessage` ("Couldn't find that place.
+    // Try a nearby city or landmark."); `error` is technical and never shown. Without a
+    // userMessage, people get the generic message.
+    throw new Error(data.userMessage || copy.server)
   }
   return data
 }

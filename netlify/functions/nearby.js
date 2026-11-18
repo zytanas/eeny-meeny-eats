@@ -8,6 +8,8 @@
 // Results are cached in Supabase `places_cache` per ~110 m grid cell and radius for CACHE_TTL_HOURS.
 // Chains are filtered out per request (not before caching), so editing CHAIN_BLOCKLIST or asking
 // for chains takes effect immediately. "Open now" is also worked out per request, so it never goes stale.
+//
+// Errors: `error` is technical; `userMessage` is set only when the text is written for people.
 import {
   CACHE_COORD_DECIMALS,
   CACHE_TTL_HOURS,
@@ -54,7 +56,7 @@ export default async (req) => {
   } catch (err) {
     const message = err instanceof GeoapifyError ? err.message : 'Could not load nearby places'
     if (!(err instanceof GeoapifyError)) console.error(err)
-    return Response.json({ error: message }, { status: 502 })
+    return Response.json({ error: message, userMessage: err.userMessage ?? undefined }, { status: 502 })
   }
 
   return Response.json({
