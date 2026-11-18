@@ -20,7 +20,10 @@
    - Buttons with white text use --color-primary-strong (4.94:1).
    - --color-primary-strong is also the pink for text and links on bg/card (>= 4.7:1).
    - --color-muted is >= 4.6:1 on bg, hero, card and accent.
-   - --color-primary is ~3:1 against bg, so pink shapes always get an ink outline. */
+   - --color-primary is ~3:1 against bg, so pink shapes always get an ink outline.
+   - --color-mint and --color-coral are block colors only: backgrounds behind food art
+     and small labels. Ink text on them passes AA (mint 8.85:1, coral 6.15:1); never put
+     white or muted text on them. They're close to bg in lightness, so always outline them. */
 :root {
   /* Palette: strawberry and mango on warm cream, chocolate ink */
   --color-bg: #fff9f4; /* warm cream page background */
@@ -33,6 +36,9 @@
   --color-on-primary: #ffffff; /* text on --color-primary-strong */
   --color-accent: #ffd56b; /* mango: art areas, selected chips, small highlights */
   --color-accent-hover: #ffdf8a;
+  --color-mint: #8fdcb8; /* block color: behind illustrations and labels (ink text only) */
+  --color-coral: #ff8a6b; /* block color: behind illustrations and labels (ink text only) */
+  --color-bg-dot: #f5e8dc; /* page halftone dots, barely darker than --color-bg */
   --color-card: #ffffff; /* cards and panels */
   --color-muted: #6f5955; /* secondary text, placeholders, metadata */
   --color-success: #237a4b; /* "open now" */
@@ -116,6 +122,14 @@ body {
   background: var(--color-bg);
 }
 
+/* A very faint halftone on the cream page, like newsprint. Dots are ~1.1:1 against
+   the cream, so they never compete with text. Panels and cards keep solid fills. */
+body {
+  background:
+    radial-gradient(var(--color-bg-dot) 1.2px, transparent 1.5px) 0 0 / 18px 18px,
+    var(--color-bg);
+}
+
 #app {
   min-height: 100dvh;
   display: flex;
@@ -186,6 +200,29 @@ select {
 .btn:active:not(:disabled) {
   transform: translate(3px, 3px) scale(0.97, 0.94);
   box-shadow: 0 0 0 var(--color-ink);
+}
+
+/* Playful hop on hover, for buttons and chips everywhere (mouse and trackpad only;
+   touch gets the squish above). Animates `translate`, not `transform`, so it stacks
+   with each component's own tilt and press transforms instead of replacing them. */
+@media (hover: hover) {
+  .btn:hover:not(:disabled),
+  .chip:hover:not(:disabled) {
+    animation: hover-hop 0.42s var(--ease-pop);
+  }
+}
+
+@keyframes hover-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 -4px;
+  }
+  70% {
+    translate: 0 1px;
+  }
 }
 
 .btn:disabled {

@@ -7,7 +7,7 @@ import { prefersReducedMotion, celebrate } from '@/utils/motion'
 import PlaceCard from '@/components/PlaceCard.vue'
 import MarqueeStrip from '@/components/MarqueeStrip.vue'
 import { pickMarqueeItems } from '@/content/marquee'
-import slotSvg from '@/assets/stickers/slot.webp'
+import slotArt from '@/assets/tools/slot.webp'
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -146,16 +146,16 @@ function reroll() {
       </Transition>
 
       <div ref="stageEl" class="stage">
-        <!-- Same slot sticker as the "Bahala na!" step on Home, perched on the reel's corner -->
+        <!-- Same slot art as the "Bahala na!" step on Home, perched on the reel's corner -->
         <Transition name="pop">
           <img
             v-if="phase === 'spinning'"
-            :src="slotSvg"
+            :src="slotArt"
             alt=""
             aria-hidden="true"
             draggable="false"
-            width="512"
-            height="512"
+            width="400"
+            height="400"
             class="slot-sticker"
           />
         </Transition>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { geocodeArea } from '@/services/api'
+import { geocodeArea, reverseGeocode } from '@/services/api'
 
 // Map fallback before we know where the user is
 export const METRO_MANILA = { lat: 14.5547, lon: 121.0244 }
@@ -7,6 +7,10 @@ export const METRO_MANILA = { lat: 14.5547, lon: 121.0244 }
 const STORAGE_KEY = 'eme:location'
 const RECENT_KEY = 'eme:recent-areas'
 const MAX_RECENT = 3
+
+// Bumped on every location change, so a slow place-name lookup for an older position
+// can't overwrite a newer location's name
+let locationVersion = 0
 
 // Restore the last location so a page refresh doesn't bounce the user home
 function loadSaved() {
@@ -32,7 +36,9 @@ export const useLocationStore = defineStore('location', {
     const saved = loadSaved()
     return {
       coords: saved.coords ?? null, // { lat, lon }
-      area: saved.area ?? '', // the place the search actually found, e.g. "Japan, Dagupan, Pangasinan"
+      // The place the search actually found ("Japan, Dagupan, Pangasinan"), or for GPS, the
+      // street and barangay it's on ("Tomas Morato Avenue, Sacred Heart, Quezon City")
+      area: saved.area ?? '',
       alternatives: [], // other good matches for the last search, for "Not the right spot?"
       status: saved.coords ? 'ready' : 'idle', // idle | locating | geocoding | ready | denied | error
       error: null,
@@ -61,10 +67,11 @@ export const useLocationStore = defineStore('location', {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             this.coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
-            this.area = ''
+            this.area = '' // "Your location" until nameGpsSpot() finds the street
             this.alternatives = []
             this.status = 'ready'
             this.persist()
+            this.nameGpsSpot()
             resolve(true)
           },
           (err) => {
@@ -80,6 +87,20 @@ export const useLocationStore = defineStore('location', {
       })
     },
 
+    // Swaps "Your location" for the street, barangay and city the GPS fix is on. Runs in the
+    // background (callers don't wait for it); on failure the label just stays "Your location".
+    async nameGpsSpot() {
+      const version = ++locationVersion
+      try {
+        const { shortLabel } = await reverseGeocode(this.coords)
+        if (version !== locationVersion || !shortLabel) return
+        this.area = shortLabel
+        this.persist()
+      } catch {
+        // Keep "Your location"
+      }
+    },
+
     // Looks up the typed area server-side (Geoapify). Resolves true once coords are set.
     // Saves the place that was actually found, not what was typed, so the header shows the truth.
     async setManualArea(area) {
@@ -90,6 +111,7 @@ export const useLocationStore = defineStore('location', {
         // center is the current location, or METRO_MANILA before we have one
         const result = await geocodeArea(text, this.center)
         const found = result.shortLabel || text
+        locationVersion++ // drop any GPS name lookup still in flight
         this.coords = { lat: result.lat, lon: result.lon }
         this.area = found
         this.alternatives = result.alternatives ?? []
@@ -106,6 +128,7 @@ export const useLocationStore = defineStore('location', {
 
     // The user tapped one of the "Not the right spot?" choices
     chooseAlternative(match) {
+      locationVersion++ // drop any GPS name lookup still in flight
       this.coords = { lat: match.lat, lon: match.lon }
       this.area = match.shortLabel
       this.alternatives = []

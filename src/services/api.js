@@ -39,6 +39,14 @@ export function geocodeArea(text, near) {
   return request(`geocode?${params}`)
 }
 
+/**
+ * A name for a GPS position: { shortLabel, label }, e.g. shortLabel
+ * "Tomas Morato Avenue, Sacred Heart, Quezon City".
+ */
+export function reverseGeocode({ lat, lon }) {
+  return request(`reverse-geocode?${new URLSearchParams({ lat, lon })}`)
+}
+
 /** Google star rating and rating count for one place. */
 export function fetchRating(place) {
   const params = new URLSearchParams({

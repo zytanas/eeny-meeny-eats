@@ -110,6 +110,22 @@ function placeSize(r) {
   return SIZE_BY_TYPE[r.result_type] ?? 0 // amenity, building (businesses, landmarks), unknown
 }
 
+// A name for where a GPS point is, for "Places within 2 km of ...":
+// street, then barangay, then city, e.g. "Tomas Morato Avenue, Sacred Heart, Quezon City".
+// Reverse geocoding returns the nearest feature, often a business ("Starbucks"); its name is
+// skipped because the user is near it, not in it. Geoapify puts the barangay in `quarter` or
+// `suburb`, and sometimes a numbered district there ("District 4"), which is skipped too.
+// Returns null when there's nothing usable, so the app keeps showing "Your location".
+export async function reverseGeocode(lat, lon) {
+  const data = await get('/v1/geocode/reverse', { lat, lon, format: 'json', limit: 1 })
+  const r = data.results?.[0]
+  if (!r) return null
+  const barangay = [r.quarter, r.suburb].find((v) => v && !/\bdistrict\b/i.test(v))
+  const parts = [r.street, barangay, r.city || r.county]
+  const shortLabel = [...new Set(parts.filter(Boolean))].join(', ')
+  return shortLabel ? { shortLabel, label: r.formatted } : null
+}
+
 // "Japan, Bonuan Binloc, Dagupan, 2400 Pangasinan, Philippines" -> "Japan, Dagupan, Pangasinan"
 function toMatch(r) {
   const parts = [r.name || r.address_line1, r.city || r.county, r.state]

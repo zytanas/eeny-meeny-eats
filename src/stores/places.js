@@ -103,6 +103,15 @@ export const usePlacesStore = defineStore('places', {
       return pick
     },
 
+    // Loads places for the current location (if they aren't already) and picks one.
+    // For "Bahala na!" on Home. Returns null when there's nothing to pick from (load
+    // error, no places, or filters that rule everything out); the caller decides what to do then.
+    async pickNearby() {
+      await this.loadNearby()
+      if (this.error) return null
+      return this.pickRandom()
+    },
+
     // Returns whether a fresh pick is waiting to be revealed, and clears the flag.
     // Refreshes and back-navigation land on the pick without replaying the reel.
     consumeReveal() {
