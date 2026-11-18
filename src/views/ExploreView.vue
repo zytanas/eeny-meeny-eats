@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocationStore } from '@/stores/location'
 import { usePlacesStore } from '@/stores/places'
@@ -31,8 +31,19 @@ const copy = {
   change: 'Change',
 }
 
-// Enough placeholder cards to fill the visible list; CSS shows 2 on mobile, 4 on tablet, 3 on desktop
-const SKELETON_COUNT = 4
+// The page's h1 while the mobile map hides the list panel (and the summary heading in it):
+// the same words as the summary, without the Change button
+const mapHeading = computed(() => {
+  if (places.loading) return copy.loading
+  const count = places.filteredPlaces.length
+  return places.radiusKm
+    ? `${count} places within ${places.radiusKm} km ${copy.of} ${location.label}`
+    : `${count} places ${copy.near} ${location.label}`
+})
+
+// Enough placeholder cards to fill the visible list; CSS shows 4 compact rows on mobile,
+// 4 vertical cards on tablet and 6 compact rows on desktop
+const SKELETON_COUNT = 6
 
 const router = useRouter()
 const location = useLocationStore()
@@ -135,6 +146,9 @@ function openPlace(id) {
         {{ copy[view] }}
       </button>
     </div>
+
+    <!-- Only shown (to screen readers) in the mobile map view; see .map-heading -->
+    <h1 class="map-heading visually-hidden">{{ mapHeading }}</h1>
 
     <MapView
       ref="mapView"
@@ -327,6 +341,18 @@ function openPlace(id) {
 
 .show-map .explore-panel {
   display: none;
+}
+
+/* The hidden h1 stands in for the summary heading only while the panel is hidden (mobile
+   map view). Everywhere else it's display: none, so the page never has two h1s. */
+.map-heading {
+  display: none;
+}
+
+@media (max-width: 639.98px) {
+  .show-map .map-heading {
+    display: block;
+  }
 }
 
 .explore-panel {
@@ -626,7 +652,7 @@ function openPlace(id) {
   font-weight: 800;
 }
 
-/* Placeholder cards in the same grid as PlaceList: 2 on mobile, 4 on tablet, 3 on desktop */
+/* Placeholder cards in the same grid as PlaceList: 4 on mobile, 4 on tablet, 6 on desktop */
 .skeleton-list {
   display: grid;
   gap: 1.1rem;
@@ -635,17 +661,13 @@ function openPlace(id) {
   list-style: none;
 }
 
-.skeleton-list li:nth-child(n + 3) {
+.skeleton-list li:nth-child(n + 5) {
   display: none;
 }
 
 @media (min-width: 640px) {
   .skeleton-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .skeleton-list li:nth-child(n + 3) {
-    display: block;
   }
 }
 
@@ -654,8 +676,8 @@ function openPlace(id) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .skeleton-list li:nth-child(n + 4) {
-    display: none;
+  .skeleton-list li:nth-child(n + 5) {
+    display: block;
   }
 }
 

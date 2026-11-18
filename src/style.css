@@ -48,7 +48,8 @@
   --color-primary-soft: #ea6686; /* decorative strawberry: fills, markers, headline shadow */
   --color-accent: #ffd56b; /* mango: highlights, badges, selected and active states */
   --color-accent-hover: #ffdf8a;
-  --color-mint: #8fdcb8; /* block color: behind illustrations and labels (ink text only) */
+  --color-mint: #8fdcb8;
+  --color-glacier: #bae4f1; /* block color: behind illustrations and labels (ink text only) */
   --color-coral: #ff8a6b; /* block color: behind illustrations and labels (ink text only) */
   --color-rating: #9a6212; /* star ratings */
 

@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import { usePlacesStore } from '@/stores/places'
 import { formatDistance, formatPrice, directionsUrl } from '@/utils/format'
 import ReportForm from '@/components/ReportForm.vue'
+import CuisineBlock from '@/components/CuisineBlock.vue'
 
 const props = defineProps({
   id: { type: String, required: true },
@@ -23,50 +24,56 @@ onMounted(() => places.loadNearby())
       <p v-if="places.loading" key="loading" class="muted">Loading…</p>
 
       <article v-else-if="place" :key="place.id" class="detail">
-        <span class="tag">{{ place.cuisine }}</span>
-        <h1>{{ place.name }}</h1>
+        <!-- Same block as the place's card, bigger; decorative, the tag says the same -->
+        <div class="banner">
+          <CuisineBlock :place="place" />
+        </div>
+        <div class="detail-body">
+          <span class="tag">{{ place.cuisine }}</span>
+          <h1>{{ place.name }}</h1>
 
-        <dl>
-          <div v-if="place.rating != null" class="stat stat--rating">
-            <dt>Google rating</dt>
-            <dd>
-              <span class="star" aria-hidden="true">★</span> {{ place.rating.toFixed(1) }}
-              <span class="muted small">({{ place.ratingCount.toLocaleString() }} reviews)</span>
-            </dd>
-          </div>
-          <div class="stat">
-            <dt>Distance</dt>
-            <dd>{{ formatDistance(place.distanceKm) }}</dd>
-          </div>
-          <div v-if="place.priceLevel" class="stat">
-            <dt>Price</dt>
-            <dd>{{ formatPrice(place.priceLevel) }}</dd>
-          </div>
-          <div class="stat">
-            <dt>Status</dt>
-            <dd v-if="place.openNow == null" class="unknown">Hours not listed</dd>
-            <dd v-else :class="place.openNow ? 'open' : 'closed'">
-              {{ place.openNow ? 'Open now' : 'Closed' }}
-            </dd>
-          </div>
-          <div v-if="place.openingHours" class="stat stat--wide">
-            <dt>Opening hours</dt>
-            <dd class="address">{{ place.openingHours }}</dd>
-          </div>
-          <div class="stat stat--wide">
-            <dt>Address</dt>
-            <dd class="address">{{ place.address }}</dd>
-          </div>
-        </dl>
+          <dl>
+            <div v-if="place.rating != null" class="stat stat--rating">
+              <dt>Google rating</dt>
+              <dd>
+                <span class="star" aria-hidden="true">★</span> {{ place.rating.toFixed(1) }}
+                <span class="muted small">({{ place.ratingCount.toLocaleString() }} reviews)</span>
+              </dd>
+            </div>
+            <div class="stat">
+              <dt>Distance</dt>
+              <dd>{{ formatDistance(place.distanceKm) }}</dd>
+            </div>
+            <div v-if="place.priceLevel" class="stat">
+              <dt>Price</dt>
+              <dd>{{ formatPrice(place.priceLevel) }}</dd>
+            </div>
+            <div class="stat">
+              <dt>Status</dt>
+              <dd v-if="place.openNow == null" class="unknown">Hours not listed</dd>
+              <dd v-else :class="place.openNow ? 'open' : 'closed'">
+                {{ place.openNow ? 'Open now' : 'Closed' }}
+              </dd>
+            </div>
+            <div v-if="place.openingHours" class="stat stat--wide">
+              <dt>Opening hours</dt>
+              <dd class="address">{{ place.openingHours }}</dd>
+            </div>
+            <div class="stat stat--wide">
+              <dt>Address</dt>
+              <dd class="address">{{ place.address }}</dd>
+            </div>
+          </dl>
 
-        <a v-if="place.website" class="website" :href="place.website" target="_blank" rel="noopener">
-          Visit website ↗
-        </a>
+          <a v-if="place.website" class="website" :href="place.website" target="_blank" rel="noopener">
+            Visit website ↗
+          </a>
 
-        <a class="btn btn-primary btn-display btn-block directions" :href="directionsUrl(place)" target="_blank" rel="noopener">
-          Get directions →
-        </a>
-        <ReportForm :place-id="place.id" />
+          <a class="btn btn-primary btn-display btn-block directions" :href="directionsUrl(place)" target="_blank" rel="noopener">
+            Get directions →
+          </a>
+          <ReportForm :place-id="place.id" />
+        </div>
       </article>
 
       <p v-else key="missing" class="muted">We couldn't find that place. It may be outside your current area.</p>
@@ -84,11 +91,24 @@ onMounted(() => places.loadNearby())
 }
 
 .detail {
-  padding: clamp(1.1rem, 0.8rem + 1.5vw, 2rem);
+  overflow: hidden; /* the banner follows the rounded corners */
   background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+}
+
+/* The cuisine block across the top of the card */
+.banner {
+  --label-inset: 15% 10%;
+  --label-max: 9rem;
+
+  height: clamp(170px, 120px + 14vw, 300px);
+  border-bottom: var(--outline);
+}
+
+.detail-body {
+  padding: clamp(1.1rem, 0.8rem + 1.5vw, 2rem);
 }
 
 .tag {

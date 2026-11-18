@@ -1,7 +1,13 @@
-// Spots chains by name or brand, using CHAIN_BLOCKLIST (and REGIONAL_CHAIN_BLOCKLIST when
-// HIDE_REGIONAL_CHAINS is on) from config.js. Tolerates punctuation, spacing and small typos, so
-// "Jolibee", "Kenny Roger's" and "ArmyNavy" are caught, but not lookalikes such as "Angela's Bakery".
-import { CHAIN_BLOCKLIST, HIDE_REGIONAL_CHAINS, REGIONAL_CHAIN_BLOCKLIST } from './config.js'
+// Spots chains by name or brand:
+//   - isFastFoodChain(): FAST_FOOD_CHAINS (fastFoodChains.js), always left out of results
+//   - isChain(): CHAIN_BLOCKLIST (and REGIONAL_CHAIN_BLOCKLIST when HIDE_REGIONAL_CHAINS is on)
+//     from config.js, left out when chains are hidden (HIDE_CHAINS / ?chains=include)
+//   - isChainBusinessName(): any of those lists or GEOCODE_SKIP_BUSINESSES (gas stations,
+//     convenience stores), for skipping "Not the right spot?" matches (geoapify.js)
+// Tolerates punctuation, spacing and small typos, so "Jolibee", "Kenny Roger's" and "ArmyNavy"
+// are caught, but not lookalikes such as "Angela's Bakery".
+import { CHAIN_BLOCKLIST, GEOCODE_SKIP_BUSINESSES, HIDE_REGIONAL_CHAINS, REGIONAL_CHAIN_BLOCKLIST } from './config.js'
+import { FAST_FOOD_CHAINS } from './fastFoodChains.js'
 
 // "Dunkin' Donuts" -> "dunkin donuts", "7-Eleven" -> "7 eleven", "Café" -> "cafe"
 export function normalizeName(text) {
@@ -16,20 +22,33 @@ export function normalizeName(text) {
 
 const words = (text) => normalizeName(text).split(' ').filter(Boolean)
 
-const TERMS = [...CHAIN_BLOCKLIST, ...(HIDE_REGIONAL_CHAINS ? REGIONAL_CHAIN_BLOCKLIST : [])]
-  .map((entry) => {
-    const tokens = words(typeof entry === 'string' ? entry : entry.name)
-    return { tokens, joined: tokens.join(''), wholeName: Boolean(entry.wholeName) }
-  })
-  .filter((term) => term.tokens.length)
+// List entries ('Jollibee' or { name, wholeName }) -> a function that says whether a place's
+// name or brand matches any of them
+function chainMatcher(entries) {
+  const terms = entries
+    .map((entry) => {
+      const tokens = words(typeof entry === 'string' ? entry : entry.name)
+      return { tokens, joined: tokens.join(''), wholeName: Boolean(entry.wholeName) }
+    })
+    .filter((term) => term.tokens.length)
 
-export function isChain(place) {
-  return [place.name, place.brand].some((text) => {
-    if (!text) return false
-    const nameWords = words(text)
-    return TERMS.some((term) => matchesTerm(nameWords, term))
-  })
+  return (place) =>
+    [place.name, place.brand].some((text) => {
+      if (!text) return false
+      const nameWords = words(text)
+      return terms.some((term) => matchesTerm(nameWords, term))
+    })
 }
+
+export const isFastFoodChain = chainMatcher(FAST_FOOD_CHAINS)
+export const isChain = chainMatcher([...CHAIN_BLOCKLIST, ...(HIDE_REGIONAL_CHAINS ? REGIONAL_CHAIN_BLOCKLIST : [])])
+const matchesChainBusiness = chainMatcher([
+  ...FAST_FOOD_CHAINS,
+  ...CHAIN_BLOCKLIST,
+  ...REGIONAL_CHAIN_BLOCKLIST,
+  ...GEOCODE_SKIP_BUSINESSES,
+])
+export const isChainBusinessName = (name) => matchesChainBusiness({ name })
 
 function matchesTerm(nameWords, term) {
   const n = term.tokens.length

@@ -78,6 +78,7 @@ export const usePlacesStore = defineStore('places', {
       this.error = null
       try {
         const data = await fetchNearby({ ...location.center, radiusKm: maxDistanceKm })
+        // Cuisines guessed from names are filled in by the server (utils/cuisineFromName.js)
         this.places = data.places ?? []
         this.radiusKm = data.radiusKm ?? maxDistanceKm
         this.requestedRadiusKm = data.requestedRadiusKm ?? maxDistanceKm

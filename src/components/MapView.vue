@@ -202,13 +202,21 @@ function centerPinHtml() {
   return pin
 }
 
+// Every marker is an invisible box at least TAP_SIZE square (the tap area) with the visible
+// disc centered inside it as a child, so the tap area can never cover the disc or its number.
+const TAP_SIZE = 44
+const PIN_SIZE = 22
+
 function clusterIcon(cluster) {
   const count = cluster.getChildCount()
   const size = count < 10 ? 36 : count < 50 ? 44 : 52
+  const box = Math.max(size, TAP_SIZE)
   return L.divIcon({
     className: 'map-cluster',
-    html: `<span aria-hidden="true">${count}</span><span class="visually-hidden">${count} places, zoom in</span>`,
-    iconSize: [size, size],
+    html:
+      `<span class="map-cluster__disc" style="width:${size}px;height:${size}px" aria-hidden="true">${count}</span>` +
+      `<span class="visually-hidden">${count} places, zoom in</span>`,
+    iconSize: [box, box],
   })
 }
 
@@ -222,7 +230,8 @@ function renderMarkers() {
       // Muted only when known to be closed; unknown hours stay strawberry
       icon: L.divIcon({
         className: place.openNow === false ? 'map-place-pin is-closed' : 'map-place-pin',
-        iconSize: [22, 22],
+        html: `<span class="map-place-pin__dot" style="width:${PIN_SIZE}px;height:${PIN_SIZE}px"></span>`,
+        iconSize: [TAP_SIZE, TAP_SIZE],
       }),
       title: place.name,
     })
@@ -276,19 +285,32 @@ function destination(center, radiusM, bearingDeg) {
 
 <!-- Leaflet builds these elements itself, outside Vue's scoped styles -->
 <style>
+/* Marker boxes (Leaflet's icon element): the invisible tap area, at least 44px (TAP_SIZE).
+   No fill, border or shadow of their own; the visible disc is the child centered inside. */
+.map-place-pin,
+.map-cluster {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Place markers: strawberry dots with a chocolate outline */
-.map-place-pin {
+.map-place-pin__dot {
+  display: block;
   border: 3px solid var(--color-ink);
   border-radius: 50%;
   background: var(--color-primary-soft);
 }
 
-.map-place-pin.is-closed {
+.map-place-pin.is-closed .map-place-pin__dot {
   background: var(--color-closed);
 }
 
 /* Clusters: a bigger strawberry sticker with the count */
-.map-cluster {
+.map-cluster__disc {
   display: grid;
   place-items: center;
   border: 3px solid var(--color-ink);
@@ -298,27 +320,25 @@ function destination(center, radiusM, bearingDeg) {
   color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 1rem;
+  line-height: 1;
   letter-spacing: 0.02em;
   transition: transform var(--dur-fast) var(--ease-pop);
 }
 
-/* Invisible 44px tap area around the small (36px) clusters; bigger ones already clear it.
-   100% is the padding box (30px inside the 3px border), so a 36px cluster gets -7px insets. */
-.map-cluster::before {
-  content: '';
-  position: absolute;
-  inset: min(0px, calc((100% - 44px) / 2));
-  border-radius: 50%;
-}
-
 @media (hover: hover) {
-  .map-cluster:hover {
+  .map-cluster:hover .map-cluster__disc {
     transform: scale(1.1);
   }
 }
 
+/* The focus ring hugs the visible disc, not the bigger tap area */
 .map-place-pin:focus-visible,
 .map-cluster:focus-visible {
+  outline: none;
+}
+
+.map-place-pin:focus-visible .map-place-pin__dot,
+.map-cluster:focus-visible .map-cluster__disc {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }

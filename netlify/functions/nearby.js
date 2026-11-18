@@ -1,13 +1,19 @@
 // GET /api/nearby?lat=..&lon=..&radius=..&tz=..&chains=include
 //
-// Named restaurants, cafes, fast food, food courts, ice cream and bakeries near a point,
-// from Geoapify (OpenStreetMap data). `radius` is the user's pick in km (default DEFAULT_RADIUS_KM);
+// Named restaurants, cafes, food courts, ice cream and bakeries near a point, from Geoapify
+// (OpenStreetMap data). `radius` is the user's pick in km (default DEFAULT_RADIUS_KM);
 // if it finds fewer than MIN_RESULTS places, the search widens through RADIUS_STEPS_KM, and the
 // response's `radiusKm` says which radius was actually used.
 //
+// Fast food is left out: fast-food chains always, and places still labelled plain "Fast Food"
+// once their names have been checked for a cuisine (lib/placeFilter.js). Places tagged fast food
+// whose name gives a real cuisine ("Master Siomai" -> Chinese) stay. Geoapify is still asked for
+// catering.fast_food, so those can be found.
+//
 // Results are cached in Supabase `places_cache` per ~110 m grid cell and radius for CACHE_TTL_HOURS.
-// Chains are filtered out per request (not before caching), so editing CHAIN_BLOCKLIST or asking
-// for chains takes effect immediately. "Open now" is also worked out per request, so it never goes stale.
+// Filtering and cuisine labels are worked out per request (not before caching), so editing a chain
+// list or a name rule, or asking for chains, takes effect immediately. The widening check counts
+// only the places that are kept. "Open now" is also worked out per request, so it never goes stale.
 //
 // Errors: `error` is technical; `userMessage` is set only when the text is written for people.
 import {
@@ -19,7 +25,7 @@ import {
   MIN_RESULTS,
   RADIUS_STEPS_KM,
 } from '../lib/config.js'
-import { isChain } from '../lib/chains.js'
+import { keepPlaces } from '../lib/placeFilter.js'
 import { fetchPlaces, GeoapifyError } from '../lib/geoapify.js'
 import { getSupabase } from '../lib/supabase.js'
 import { isOpenNow, isValidTimeZone } from '../lib/openNow.js'
@@ -50,7 +56,7 @@ export default async (req) => {
   try {
     for (radiusKm of radii) {
       ;({ places, source } = await placesWithin(cellLat, cellLon, radiusKm))
-      if (hideChains) places = places.filter((p) => !isChain(p))
+      places = keepPlaces(places, { hideChains })
       if (places.length >= MIN_RESULTS) break
     }
   } catch (err) {

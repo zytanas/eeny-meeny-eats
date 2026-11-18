@@ -29,51 +29,25 @@ export const PLACE_CATEGORIES = [
 // An entry written as { name, wholeName: true } only matches when it's the place's entire name, for
 // names that are too common on their own ("Julie's" is the bakeshop, "Julies Fastfood" isn't).
 // Set HIDE_CHAINS to false to show chains by default; a request can also ask for them with ?chains=include.
+// Fast-food chains aren't here: they're in fastFoodChains.js and are always left out, whatever
+// these settings say.
 export const HIDE_CHAINS = true
 export const CHAIN_BLOCKLIST = [
-  // Burgers, chicken and fast food
-  'Jollibee',
-  "McDonald's",
-  'KFC',
-  'Chowking',
-  'Mang Inasal',
-  'Greenwich',
-  'Burger King',
-  "Wendy's",
-  "Shakey's",
-  'Pizza Hut',
-  "Domino's",
-  'Yellow Cab',
-  "Angel's Burger",
-  { name: "Angel's", wholeName: true }, // bare "Angel's" is the burger stand; "Angel's Food Hub" isn't
-  "Angel's Pizza",
-  'Army Navy',
-  'Minute Burger',
+  // Restaurants
   'Tropical Hut',
   'Shake Shack',
   'TGI Fridays',
   'Texas Roadhouse',
-  'Popeyes',
-  'Bonchon',
-  'Kenny Rogers',
   "Max's Restaurant",
-  "Andok's",
-  'Chooks to Go',
-  'Baliwag Lechon Manok',
-  { name: 'Baliwag', wholeName: true }, // also a town name, so only on its own
+  { name: "Max's", wholeName: true }, // bare "Max's" is the brand tag; "Max's Barbershop Cafe" isn't
   'Classic Savory',
   'Buffalo Wild Wings',
-  'Potato Corner',
-  'Turks',
-  'Shawarma Shack',
-  'Subway',
-  'Sbarro',
   "Italianni's",
   "Gerry's Grill",
   "Gilligan's",
   'Ribshack',
   // Filipino and Asian
-  'Tokyo Tokyo',
+  'Kuya J',
   'Master Siomai',
   'Siomai House',
   'Yoshinoya',
@@ -132,6 +106,28 @@ export const CHAIN_BLOCKLIST = [
   'Lawson',
 ]
 
+// "Not the right spot?" (typed-area search) skips matches that are a chain business rather than
+// a place to search around, when there are streets, districts or areas to offer instead. A match
+// counts as a chain business when it's a business result (not a street or area) whose name is on
+// CHAIN_BLOCKLIST, FAST_FOOD_CHAINS (fastFoodChains.js) or this list. See geocode() in geoapify.js.
+export const GEOCODE_SKIP_BUSINESSES = [
+  // Gas stations
+  'Petron',
+  'Shell',
+  'Caltex',
+  'Phoenix',
+  'Seaoil',
+  'Cleanfuel',
+  'Unioil',
+  'TotalEnergies',
+  'Flying V',
+  'Jetti',
+  'PTT',
+  // Convenience stores not on CHAIN_BLOCKLIST
+  'Alfamart',
+  "Uncle John's",
+]
+
 // Smaller regional chains, still shown for now. Set HIDE_REGIONAL_CHAINS to true to hide them too.
 export const HIDE_REGIONAL_CHAINS = false
 export const REGIONAL_CHAIN_BLOCKLIST = [
@@ -149,8 +145,12 @@ export const REGIONAL_CHAIN_BLOCKLIST = [
   'Mary Grace',
 ]
 
-// Places with the same name within this many meters of each other count as one
-export const DUPLICATE_DISTANCE_M = 50
+// Places with the same name within this many meters of each other count as one. OpenStreetMap
+// often maps a local spot twice (a building and a point in it); in the Nov 2026 cache those copies
+// were 51-139 m apart, while the closest same-name local places that are really separate were
+// 333 m apart. (Chain branches can be closer, e.g. two Starbucks 67 m apart in a mall, but chains
+// are hidden by default.)
+export const DUPLICATE_DISTANCE_M = 150
 
 // How long cached nearby results stay fresh in Supabase `places_cache`
 export const CACHE_TTL_HOURS = 24

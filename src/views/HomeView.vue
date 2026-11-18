@@ -1,202 +1,223 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
-import { gsap } from 'gsap'
-import { useLocationStore } from '@/stores/location'
-import { usePlacesStore } from '@/stores/places'
-import { prefersReducedMotion } from '@/utils/motion'
-import { FOOD_ART, FOOD_ART_SIZE } from '@/utils/foodArt'
-import LocationForm from '@/components/LocationForm.vue'
-import AreaChips from '@/components/AreaChips.vue'
-import pinArt from '@/assets/tools/pin.webp'
-import mapArt from '@/assets/tools/map.webp'
-import slotArt from '@/assets/tools/slot.webp'
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
+import { gsap } from "gsap";
+import { useLocationStore } from "@/stores/location";
+import { usePlacesStore } from "@/stores/places";
+import { prefersReducedMotion } from "@/utils/motion";
+import { FOOD_ART, FOOD_ART_SIZE } from "@/utils/foodArt";
+import LocationForm from "@/components/LocationForm.vue";
+import AreaChips from "@/components/AreaChips.vue";
+import pinArt from "@/assets/tools/pin.webp";
+import mapArt from "@/assets/tools/map.webp";
+import slotArt from "@/assets/tools/slot.webp";
 
 // All headline, subline and button text for this screen, in one place for easy editing
 const copy = {
   intro: {
     // Beat 1 (one line each), then beat 2 lands as the punchline
     // Each line is wrapped in oversized double quotes in the template
-    headlineSetup: ['Kahit saan.', 'Ikaw bahala.'],
-    headlinePunch: 'Sound familiar?',
+    headlineSetup: ["Kahit saan.", "Ikaw bahala."],
+    headlinePunch: "Sound familiar?",
     subline: "Explore what's near you, or let us pick for you.",
-    cta: 'Bahala na!',
-    ctaLocating: 'Finding you…',
-    ctaBusy: 'Picking…',
-    scrollHint: 'or scroll down',
+    cta: "Bahala na!",
+    ctaLocating: "Finding you…",
+    ctaBusy: "Picking…",
+    scrollHint: "or scroll down",
     // Decorative stickers around the headline (aria-hidden, so screen readers skip them)
     labels: {
-      club: 'Kahit saan club',
-      arte: 'Walang arte',
-      kainan: 'Your next kainan',
+      club: "Kahit saan club",
+      arte: "Walang arte",
+      kainan: "Your next kainan",
       // The \n only breaks the line on phones (see .deco--umay); elsewhere it's a space
-      umay: 'Fast food na naman?\nUmay.',
+      umay: "Fast food na naman?\nUmay.",
     },
   },
   location: {
-    headline: 'Saan ka ngayon?',
+    headline: "Saan ka ngayon?",
     subline: "Tell us where you are and we'll find food nearby.",
     // Shown after "Bahala na!" was tapped before we knew the location
     pickPending: "Set your spot and we'll pick a place right away.",
-    picking: 'Picking a place near you…',
+    picking: "Picking a place near you…",
     // The form's own text (buttons, input) lives in components/LocationForm.vue,
     // and the Recent / Quick picks chips' text in components/AreaChips.vue
     privacyNote: "We only use your location to find food nearby. It's never saved.",
     resume: (label) => `Continue exploring ${label} →`,
   },
   howItWorks: {
-    headline: 'How it works',
+    headline: "How it works",
     // Each step's sticker is set in `howItWorksSteps` below
     steps: [
-      { title: 'Share your location', text: 'Or type a street or landmark, plus the city.' },
-      { title: "Explore what's near", text: 'Browse places on the map and list.' },
-      { title: 'Bahala na!', text: 'Still stuck? Let us pick for you.' },
+      {
+        title: "Share your location",
+        text: "Or type a street or landmark, plus the city.",
+      },
+      { title: "Explore what's near", text: "Browse places on the map and list." },
+      { title: "Bahala na!", text: "Still stuck? Let us pick for you." },
     ],
   },
-}
+};
 
 const howItWorksSteps = copy.howItWorks.steps.map((step, i) => ({
   ...step,
   sticker: [pinArt, mapArt, slotArt][i],
-}))
-const fullHeadline = [...copy.intro.headlineSetup.map((line) => `“${line}”`), copy.intro.headlinePunch].join(' ')
+}));
+const fullHeadline = [
+  ...copy.intro.headlineSetup.map((line) => `“${line}”`),
+  copy.intro.headlinePunch,
+].join(" ");
 
 // Decorative illustrations and labels scattered around the headline, like stickers on a board.
 // `block` puts the art on an outlined color block. Which zone each one sits in, and its
 // position, size and tilt, live in the CSS (.deco--<name>). `lazy` marks items that only
 // show on wider screens, so phones never download them.
 const heroDecor = [
-  { name: 'taco', art: 'taco' },
-  { name: 'sushi', art: 'sushi', block: 'mint', lazy: true },
-  { name: 'iced-coffee', art: 'icedCoffee' },
-  { name: 'bibimbap', art: 'bibimbap', block: 'coral' },
-  { name: 'pho', art: 'pho' },
-  { name: 'sisig', art: 'sisig', lazy: true },
-  { name: 'samgyupsal', art: 'samgyupsal', block: 'accent', lazy: true },
-  { name: 'barbecue', art: 'barbecue', lazy: true },
-  { name: 'club', label: copy.intro.labels.club, block: 'coral' },
-  { name: 'arte', label: copy.intro.labels.arte, block: 'mint' },
-  { name: 'kainan', label: copy.intro.labels.kainan, block: 'accent' },
-  { name: 'umay', label: copy.intro.labels.umay, block: 'mint' },
-].map((item, i) => ({ ...item, index: i, img: item.art && FOOD_ART[item.art] }))
+  { name: "taco", art: "taco" },
+  { name: "sushi", art: "sushi", block: "mint", lazy: true },
+  { name: "iced-coffee", art: "icedCoffee" },
+  { name: "bibimbap", art: "bibimbap", block: "coral" },
+  { name: "pho", art: "pho" },
+  { name: "sisig", art: "sisig", lazy: true },
+  { name: "samgyupsal", art: "samgyupsal", block: "glacier", lazy: true },
+  { name: "barbecue", art: "barbecue", lazy: true },
+  { name: "club", label: copy.intro.labels.club, block: "coral" },
+  { name: "arte", label: copy.intro.labels.arte, block: "mint" },
+  { name: "kainan", label: copy.intro.labels.kainan, block: "accent" },
+  { name: "umay", label: copy.intro.labels.umay, block: "glacier" },
+].map((item, i) => ({ ...item, index: i, img: item.art && FOOD_ART[item.art] }));
 
-const router = useRouter()
-const location = useLocationStore()
-const places = usePlacesStore()
+const router = useRouter();
+const location = useLocationStore();
+const places = usePlacesStore();
 
 // The intro plays on every visit, including return visits
-const introEl = ref(null)
-const locationStep = ref(null)
-const locationHeading = ref(null)
-let observer = null
-let gsapCtx = null
+const introEl = ref(null);
+const locationStep = ref(null);
+const locationHeading = ref(null);
+let observer = null;
+let gsapCtx = null;
 
 onMounted(() => {
-  playIntro()
+  playIntro();
 
   // The location step fades in once it scrolls into view
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
-        locationStep.value?.classList.add('is-visible')
-        observer.disconnect()
+        locationStep.value?.classList.add("is-visible");
+        observer.disconnect();
       }
     },
-    { threshold: 0.2 },
-  )
-  observer.observe(locationStep.value)
-})
+    { threshold: 0.2 }
+  );
+  observer.observe(locationStep.value);
+});
 
 onBeforeUnmount(() => {
-  observer?.disconnect()
-  gsapCtx?.revert()
-})
+  observer?.disconnect();
+  gsapCtx?.revert();
+});
 
 // Two-beat headline: the familiar excuses drop in, a pause, then the punchline slams down
 function playIntro() {
-  if (prefersReducedMotion()) return
+  if (prefersReducedMotion()) return;
 
   gsapCtx = gsap.context(() => {
     gsap
       .timeline()
-      .from('.setup-line', {
+      .from(".setup-line", {
         y: 48,
         rotate: -4,
         opacity: 0,
         duration: 0.35,
         stagger: 0.2,
-        ease: 'back.out(2)',
+        ease: "back.out(2)",
       })
       .from(
-        '.punch',
+        ".punch",
         {
           scale: 2.2,
           rotate: 10,
           opacity: 0,
           duration: 0.35,
-          ease: 'power4.in',
-          clearProps: 'all',
+          ease: "power4.in",
+          clearProps: "all",
         },
-        '+=0.55', // the comedic beat before the punchline
+        "+=0.55" // the comedic beat before the punchline
       )
       // Landing thud: the whole headline bumps when the punchline hits
-      .to('.intro-headline', { y: 6, duration: 0.08, yoyo: true, repeat: 1, ease: 'power1.out' })
+      .to(".intro-headline", {
+        y: 6,
+        duration: 0.08,
+        yoyo: true,
+        repeat: 1,
+        ease: "power1.out",
+      })
       .from(
-        ['.intro-subline', '.intro-cta', '.scroll-hint'],
-        { y: 24, opacity: 0, duration: 0.3, stagger: 0.08, ease: 'back.out(1.8)', clearProps: 'all' },
-        '+=0.1',
-      )
-  }, introEl.value)
+        [".intro-subline", ".intro-cta", ".scroll-hint"],
+        {
+          y: 24,
+          opacity: 0,
+          duration: 0.3,
+          stagger: 0.08,
+          ease: "back.out(1.8)",
+          clearProps: "all",
+        },
+        "+=0.1"
+      );
+  }, introEl.value);
 }
 
 function continueToLocation() {
   locationStep.value.scrollIntoView({
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-    block: 'start',
-  })
-  locationHeading.value?.focus({ preventScroll: true })
+    behavior: prefersReducedMotion() ? "auto" : "smooth",
+    block: "start",
+  });
+  locationHeading.value?.focus({ preventScroll: true });
 }
 
 // "Bahala na!": always picks near where the user is right now, so it asks the browser for the
 // live location on every tap (even if an area was typed earlier) and picks once it's allowed.
 // If it's denied or unavailable, take the user to the location step (which shows why) and
 // pick as soon as they type an area.
-const picking = ref(false)
-const pickAfterLocate = ref(false)
-const locating = computed(() => location.status === 'locating')
+const picking = ref(false);
+const pickAfterLocate = ref(false);
+const locating = computed(() => location.status === "locating");
 
 const ctaText = computed(() => {
-  if (picking.value) return copy.intro.ctaBusy
-  if (locating.value) return copy.intro.ctaLocating
-  return copy.intro.cta
-})
+  if (picking.value) return copy.intro.ctaBusy;
+  if (locating.value) return copy.intro.ctaLocating;
+  return copy.intro.cta;
+});
 
 async function bahalaNa() {
-  if (picking.value || locating.value) return
-  if (await location.requestBrowserLocation()) return pickAndGo()
+  if (picking.value || locating.value) return;
+  if (await location.requestBrowserLocation()) return pickAndGo();
 
-  pickAfterLocate.value = true
-  continueToLocation()
+  pickAfterLocate.value = true;
+  continueToLocation();
 }
 
 // Falls back to Explore when there's nothing to pick from, which explains why
 // (load error, no places nearby, or filters that rule everything out)
 async function pickAndGo() {
-  picking.value = true
+  picking.value = true;
   try {
-    const pick = await places.pickNearby()
-    await router.push(pick ? { name: 'pick', params: { id: pick.id } } : { name: 'explore' })
+    const pick = await places.pickNearby();
+    await router.push(
+      pick ? { name: "pick", params: { id: pick.id } } : { name: "explore" }
+    );
   } finally {
-    picking.value = false
+    picking.value = false;
   }
 }
 
 function onLocated() {
   if (pickAfterLocate.value) {
-    pickAfterLocate.value = false
-    pickAndGo()
+    pickAfterLocate.value = false;
+    pickAndGo();
   } else {
-    router.push({ name: 'explore' })
+    router.push({ name: "explore" });
   }
 }
 </script>
@@ -253,7 +274,12 @@ function onLocated() {
           :aria-busy="picking || locating ? 'true' : undefined"
           @click="bahalaNa"
         >
-          <span class="cta-dice" :class="{ 'is-rolling': picking || locating }" aria-hidden="true">🎲</span>
+          <span
+            class="cta-dice"
+            :class="{ 'is-rolling': picking || locating }"
+            aria-hidden="true"
+            >🎲</span
+          >
           {{ ctaText }}
         </button>
       </div>
@@ -274,14 +300,22 @@ function onLocated() {
         <!-- Always in the DOM so screen readers announce the change to "picking" -->
         <p class="pick-note" role="status">
           <span v-if="picking" class="pick-note-text">{{ copy.location.picking }}</span>
-          <span v-else-if="pickAfterLocate" class="pick-note-text">{{ copy.location.pickPending }}</span>
+          <span v-else-if="pickAfterLocate" class="pick-note-text">{{
+            copy.location.pickPending
+          }}</span>
         </p>
 
         <section class="how-it-works" aria-labelledby="how-it-works-headline">
-          <h3 id="how-it-works-headline" class="how-headline display">{{ copy.howItWorks.headline }}</h3>
+          <h3 id="how-it-works-headline" class="how-headline display">
+            {{ copy.howItWorks.headline }}
+          </h3>
           <!-- Dashed connectors between the rows (::before/::after) read as a sequence -->
           <ol class="steps">
-            <li v-for="(step, i) in howItWorksSteps" :key="step.title" class="step sticker">
+            <li
+              v-for="(step, i) in howItWorksSteps"
+              :key="step.title"
+              class="step sticker"
+            >
               <span class="step-num" aria-hidden="true">{{ i + 1 }}</span>
               <img
                 :src="step.sticker"
@@ -365,15 +399,15 @@ function onLocated() {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(var(--zone-min), 1fr) auto minmax(var(--zone-min), 1fr) auto;
-  grid-template-areas: 'top' 'content' 'bottom' 'hint';
+  grid-template-areas: "top" "content" "bottom" "hint";
   row-gap: clamp(0.5rem, 2dvh, 1.25rem);
   min-height: calc(100dvh - var(--header-total));
   padding: clamp(0.5rem, 2dvh, 1.5rem) var(--pad-right)
     calc(clamp(0.75rem, 2.5dvh, 1.5rem) + env(safe-area-inset-bottom)) var(--pad-left);
   text-align: center;
   /* Soft strawberry with a faint halftone dot texture */
-  background:
-    radial-gradient(var(--color-hero-dot) 1.5px, transparent 1.7px) 0 0 / 16px 16px,
+  background: radial-gradient(var(--color-hero-dot) 1.5px, transparent 1.7px) 0 0 / 16px
+      16px,
     var(--color-hero);
   color: var(--color-ink);
 }
@@ -581,9 +615,7 @@ function onLocated() {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--color-ink);
-  animation:
-    sticker-in 0.35s var(--ease-pop) both,
-    wiggle 4.5s ease-in-out infinite;
+  animation: sticker-in 0.35s var(--ease-pop) both, wiggle 4.5s ease-in-out infinite;
   animation-delay: calc(1.5s + var(--i, 0) * 70ms), calc(2s + var(--i, 0) * 0.3s);
 }
 
@@ -595,22 +627,77 @@ function onLocated() {
 }
 
 /* Block colors (ink text on all of them passes AA; see the tokens) */
-.block--mint { background: var(--color-mint); }
-.block--coral { background: var(--color-coral); }
-.block--accent { background: var(--color-accent); }
+.block--mint {
+  background: var(--color-mint);
+}
+.block--glacier {
+  background: var(--color-glacier);
+}
+.block--coral {
+  background: var(--color-coral);
+}
+.block--accent {
+  background: var(--color-accent);
+}
 
 /* Phones and tablets: two big stickers in each zone, bleeding off the side edges, with
    the labels in the middle (two up top, one below). Sushi, sisig, samgyupsal and barbecue
    only appear on desktop (lazy, so phones and tablets never download them). */
-.deco--taco        { grid-area: top;    --x: 1%;  --y: 50%; --h: 100; --w: 36; --rot: -12deg; }
-.deco--iced-coffee { grid-area: top;    --x: 98%; --y: 50%; --h: 100; --w: 34; --rot: 10deg; }
-.deco--club        { grid-area: top;    --x: 50%; --y: 22%; --rot: -5deg; }
+.deco--taco {
+  grid-area: top;
+  --x: 1%;
+  --y: 50%;
+  --h: 100;
+  --w: 36;
+  --rot: -12deg;
+}
+.deco--iced-coffee {
+  grid-area: top;
+  --x: 98%;
+  --y: 50%;
+  --h: 100;
+  --w: 34;
+  --rot: 10deg;
+}
+.deco--club {
+  grid-area: top;
+  --x: 50%;
+  --y: 22%;
+  --rot: -5deg;
+}
 /* Two lines on phones: the question, then the punchline */
-.deco--umay        { grid-area: top;    --x: 50%; --y: 72%; --rot: 3deg; --lh: calc(2.8em + 6px); white-space: pre-line; text-align: center; }
+.deco--umay {
+  grid-area: top;
+  --x: 50%;
+  --y: 72%;
+  --rot: 3deg;
+  --lh: calc(2.8em + 6px);
+  white-space: pre-line;
+  text-align: center;
+}
 
-.deco--bibimbap    { grid-area: bottom; --x: 10%; --y: 50%; --h: 92; --w: 34; --rot: -7deg; }
-.deco--pho         { grid-area: bottom; --x: 90%; --y: 50%; --h: 100; --w: 38; --rot: 8deg; }
-.deco--kainan      { grid-area: bottom; --x: 50%; --y: 50%; --rot: 4deg; }
+.deco--bibimbap {
+  grid-area: bottom;
+  --x: 10%;
+  --y: 50%;
+  --h: 92;
+  --w: 34;
+  --rot: -7deg;
+}
+.deco--pho {
+  grid-area: bottom;
+  --x: 90%;
+  --y: 50%;
+  --h: 100;
+  --w: 38;
+  --rot: 8deg;
+}
+.deco--kainan {
+  grid-area: bottom;
+  --x: 50%;
+  --y: 50%;
+  --rot: 4deg;
+}
 
 .deco--sushi,
 .deco--sisig,
@@ -635,16 +722,38 @@ function onLocated() {
 /* Tablets: taller zones, same two-per-zone layout with bigger art. The middle is wide
    enough for the umay label on one line. */
 @media (min-width: 640px) {
-  .intro { --zone-min: clamp(5rem, 15dvh, 10rem); }
-  .deco--art:not(.deco--on-block) img { filter: drop-shadow(5px 5px 0 var(--color-ink)); }
+  .intro {
+    --zone-min: clamp(5rem, 15dvh, 10rem);
+  }
+  .deco--art:not(.deco--on-block) img {
+    filter: drop-shadow(5px 5px 0 var(--color-ink));
+  }
 
-  .deco--taco        { --x: 9%;  --w: 28; }
-  .deco--iced-coffee { --x: 91%; --w: 27; }
-  .deco--club        { --y: 26%; }
-  .deco--umay        { --y: 74%; --lh: calc(1.8em + 6px); white-space: nowrap; }
+  .deco--taco {
+    --x: 9%;
+    --w: 28;
+  }
+  .deco--iced-coffee {
+    --x: 91%;
+    --w: 27;
+  }
+  .deco--club {
+    --y: 26%;
+  }
+  .deco--umay {
+    --y: 74%;
+    --lh: calc(1.8em + 6px);
+    white-space: nowrap;
+  }
 
-  .deco--bibimbap    { --x: 10%; --w: 26; }
-  .deco--pho         { --x: 90%; --w: 28; }
+  .deco--bibimbap {
+    --x: 10%;
+    --w: 26;
+  }
+  .deco--pho {
+    --x: 90%;
+    --w: 28;
+  }
 }
 
 /* Landscape phones: too short for everything, so the top sticker row and the subline go
@@ -683,10 +792,10 @@ function onLocated() {
     --zone-min: clamp(2rem, 6dvh, 4rem);
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     grid-template-areas:
-      'left top right'
-      'left content right'
-      'left bottom right'
-      'hint hint hint';
+      "left top right"
+      "left content right"
+      "left bottom right"
+      "hint hint hint";
   }
 
   /* Leaves each side column at least ~16vw for the stickers */
@@ -719,23 +828,103 @@ function onLocated() {
     display: block;
   }
 
-  .deco--taco        { grid-area: left;  --x: 38%; --y: 11%; --w: 11; --h: 20; --rot: -12deg; }
-  .deco--samgyupsal  { grid-area: left;  --x: 62%; --y: 37%; --w: 10; --h: 18; --rot: -5deg; }
-  .deco--sisig       { grid-area: left;  --x: 36%; --y: 63%; --w: 11; --h: 20; --rot: 6deg; }
-  .deco--bibimbap    { grid-area: left;  --x: 60%; --y: 89%; --w: 10; --h: 18; --rot: -7deg; }
-  .deco--sushi       { grid-area: right; --x: 40%; --y: 11%; --w: 10; --h: 18; --rot: 7deg; }
-  .deco--iced-coffee { grid-area: right; --x: 64%; --y: 37%; --w: 11; --h: 21; --rot: 10deg; }
-  .deco--pho         { grid-area: right; --x: 38%; --y: 63%; --w: 11; --h: 20; --rot: -6deg; }
-  .deco--barbecue    { grid-area: right; --x: 62%; --y: 89%; --w: 11; --h: 20; --rot: 9deg; }
+  .deco--taco {
+    grid-area: left;
+    --x: 38%;
+    --y: 11%;
+    --w: 11;
+    --h: 20;
+    --rot: -12deg;
+  }
+  .deco--samgyupsal {
+    grid-area: left;
+    --x: 62%;
+    --y: 37%;
+    --w: 10;
+    --h: 18;
+    --rot: -5deg;
+  }
+  .deco--sisig {
+    grid-area: left;
+    --x: 36%;
+    --y: 63%;
+    --w: 11;
+    --h: 20;
+    --rot: 6deg;
+  }
+  .deco--bibimbap {
+    grid-area: left;
+    --x: 60%;
+    --y: 89%;
+    --w: 10;
+    --h: 18;
+    --rot: -7deg;
+  }
+  .deco--sushi {
+    grid-area: right;
+    --x: 40%;
+    --y: 11%;
+    --w: 10;
+    --h: 18;
+    --rot: 7deg;
+  }
+  .deco--iced-coffee {
+    grid-area: right;
+    --x: 64%;
+    --y: 37%;
+    --w: 11;
+    --h: 21;
+    --rot: 10deg;
+  }
+  .deco--pho {
+    grid-area: right;
+    --x: 38%;
+    --y: 63%;
+    --w: 11;
+    --h: 20;
+    --rot: -6deg;
+  }
+  .deco--barbecue {
+    grid-area: right;
+    --x: 62%;
+    --y: 89%;
+    --w: 11;
+    --h: 20;
+    --rot: 9deg;
+  }
 
-  .deco--club        { grid-area: top;   --x: 50%; --y: 50%; --rot: -3deg; }
-  .deco--kainan      { grid-area: right; --x: 50%; --y: 24%; --rot: 5deg; }
-  .deco--arte        { grid-area: left;  --x: 50%; --y: 76%; --rot: -6deg; }
+  .deco--club {
+    grid-area: top;
+    --x: 50%;
+    --y: 50%;
+    --rot: -3deg;
+  }
+  .deco--kainan {
+    grid-area: right;
+    --x: 50%;
+    --y: 24%;
+    --rot: 5deg;
+  }
+  .deco--arte {
+    grid-area: left;
+    --x: 50%;
+    --y: 76%;
+    --rot: -6deg;
+  }
   /* Mirrors "Kahit saan club" in the zone under the headline group */
-  .deco--umay        { grid-area: bottom; --x: 50%; --y: 50%; --rot: 3deg; }
+  .deco--umay {
+    grid-area: bottom;
+    --x: 50%;
+    --y: 50%;
+    --rot: 3deg;
+  }
 
-  .deco--art:not(.deco--on-block) img { filter: drop-shadow(6px 6px 0 var(--color-ink)); }
-  .deco--on-block .deco-body { box-shadow: var(--shadow-lg); }
+  .deco--art:not(.deco--on-block) img {
+    filter: drop-shadow(6px 6px 0 var(--color-ink));
+  }
+  .deco--on-block .deco-body {
+    box-shadow: var(--shadow-lg);
+  }
 }
 
 /* ---------- Location step ---------- */
@@ -830,7 +1019,7 @@ function onLocated() {
 
 /* The mango card behind, tilted and offset like a second sticker underneath */
 .card-stack::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -981,14 +1170,18 @@ function onLocated() {
   text-align: left;
 }
 
-.step:nth-child(odd) { rotate: -0.6deg; }
-.step:nth-child(even) { rotate: 0.6deg; }
+.step:nth-child(odd) {
+  rotate: -0.6deg;
+}
+.step:nth-child(even) {
+  rotate: 0.6deg;
+}
 
 /* Dashed connector down to the next row, lined up under the sticker, with a small
    arrowhead at its end */
 .step:not(:last-child)::before,
 .step:not(:last-child)::after {
-  content: '';
+  content: "";
   position: absolute;
   left: calc(var(--step-pad-x) + 0.5rem + var(--sticker-w) / 2);
   pointer-events: none;
@@ -1084,7 +1277,7 @@ function onLocated() {
 
   /* The last row points across the gap to the card */
   .step:last-child::after {
-    content: '→';
+    content: "→";
     position: absolute;
     top: 50%;
     left: calc(100% + 0.6rem);
@@ -1130,25 +1323,46 @@ function onLocated() {
 
 /* Idle float on the inner .deco-body (its outer .deco owns translate for centering) */
 @keyframes bob {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -8px; }
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8px;
+  }
 }
 
 /* Labels rock gently around their own tilt */
 @keyframes wiggle {
-  0%, 100% { rotate: var(--rot); }
-  50% { rotate: calc(var(--rot) + 3deg); }
+  0%,
+  100% {
+    rotate: var(--rot);
+  }
+  50% {
+    rotate: calc(var(--rot) + 3deg);
+  }
 }
 
 @keyframes roll {
-  0% { transform: rotate(0) scale(1); }
-  50% { transform: rotate(200deg) scale(1.2); }
-  100% { transform: rotate(360deg) scale(1); }
+  0% {
+    transform: rotate(0) scale(1);
+  }
+  50% {
+    transform: rotate(200deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 @keyframes nudge {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
 }
 
 /* No motion at all for users who ask for it (on top of the global rule) */

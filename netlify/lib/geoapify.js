@@ -1,5 +1,6 @@
 // Thin wrappers around the Geoapify APIs. The API key never leaves the server.
 import { COUNTRY_FILTER, DUPLICATE_DISTANCE_M, PLACE_CATEGORIES, RESULT_LIMIT } from './config.js'
+import { isChainBusinessName } from './chains.js'
 
 const BASE = 'https://api.geoapify.com'
 
@@ -8,7 +9,7 @@ const BASE = 'https://api.geoapify.com'
 const MIN_CONFIDENCE = 0.8 // below this, a match is more likely a guess than the place the user meant
 const GEOCODE_LIMIT = 15 // 1 credit per request whatever the limit; extra results keep far exact matches as choices
 const NEARBY_KM = 30 // a match this close to the bias point beats any farther one, whatever its size
-const SAME_PLACE_M = 200 // matches this close to a better-ranked one count as the same place
+const SAME_PLACE_M = 200 // matches this close to a better-ranked one (or with the same shortLabel) count as the same place
 const MAX_ALTERNATIVES = 4 // "Not the right spot?" chips
 
 // `message` is technical (logs, the response's `error` field). `userMessage`, when set, is
@@ -52,8 +53,10 @@ export async function fetchPlaces({ lat, lon, radiusM }) {
 }
 
 // OpenStreetMap often maps one spot twice (e.g. as a building and as a point inside it).
-// Same name within DUPLICATE_DISTANCE_M counts as one; the copy with more details wins.
-function dedupe(places) {
+// Same name within DUPLICATE_DISTANCE_M counts as one; the copy with more details wins (a
+// specific cuisine, opening hours, a website), or the nearer one on a tie. Runs before caching
+// and again per request (placeFilter.js), so cache rows saved with an older distance are merged too.
+export function dedupe(places) {
   const kept = []
   for (const place of places) {
     const key = place.name.trim().toLowerCase()
@@ -64,7 +67,9 @@ function dedupe(places) {
   return kept
 }
 
-const detailScore = (p) => (p.openingHours ? 1 : 0) + (p.website ? 1 : 0)
+// Labels that only say what kind of place it is (see PLACE_KINDS)
+const GENERIC_CUISINES = new Set(['Restaurant', 'Fast Food', 'Cafe', 'Food Court'])
+const detailScore = (p) => (GENERIC_CUISINES.has(p.cuisine) ? 0 : 1) + (p.openingHours ? 1 : 0) + (p.website ? 1 : 0)
 
 // Equirectangular approximation; plenty accurate at duplicate-checking distances
 function metersBetween(a, b) {
@@ -86,14 +91,30 @@ export async function geocode(text, near = null) {
   const results = data.results ?? []
 
   const confident = results.filter((r) => (r.rank?.confidence ?? 0) >= MIN_CONFIDENCE)
+  // A match is dropped when it's within SAME_PLACE_M of a better-ranked one, or would show the
+  // same text: two "Tomas Morato Avenue, Quezon City, Metro Manila" chips can't be told apart
+  // (long roads come back as several segments)
   const kept = []
   for (const r of rankMatches(confident, near)) {
-    if (!kept.some((k) => metersBetween(k, r) <= SAME_PLACE_M)) kept.push(r)
+    const match = toMatch(r)
+    if (!kept.some(({ match: k }) => metersBetween(k, match) <= SAME_PLACE_M || k.shortLabel === match.shortLabel)) {
+      kept.push({ r, match })
+    }
   }
 
   if (!kept.length) return null
-  const [best, ...alternatives] = kept.slice(0, MAX_ALTERNATIVES + 1).map(toMatch)
-  return { ...best, alternatives }
+  const [best, ...others] = kept
+  // Chain businesses (a 7-Eleven, a Petron) aren't places to search around: skip them as
+  // alternatives when the results include streets, districts or areas (the best match counts:
+  // for "Tomas Morato" it's the avenue, and its other segments were merged into it above).
+  // The best match is never changed by this; when the results are all businesses
+  // ("Petron EDSA"), chain alternatives stay.
+  const hasAreas = kept.some(({ r }) => placeSize(r) > 0)
+  const alternatives = others
+    .filter(({ r }) => !(hasAreas && isChainBusiness(r)))
+    .slice(0, MAX_ALTERNATIVES)
+    .map(({ match }) => match)
+  return { ...best.match, alternatives }
 }
 
 // Best first: matches within NEARBY_KM of `near` beat far ones ("Katipunan" -> the QC one, not a
@@ -108,6 +129,11 @@ function rankMatches(results, near) {
     })
     .sort((a, b) => b.nearby - a.nearby || b.size - a.size || a.km - b.km)
     .map((m) => m.r)
+}
+
+// A business result (not a street or area) whose name is a known chain (chains.js)
+function isChainBusiness(r) {
+  return placeSize(r) === 0 && Boolean(r.name) && isChainBusinessName(r.name)
 }
 
 // Bigger number = bigger place

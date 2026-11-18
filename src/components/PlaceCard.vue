@@ -1,44 +1,51 @@
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { formatDistance, formatPrice } from '@/utils/format'
-import { cuisineArt } from '@/utils/cuisine'
-import CuisineArt from './CuisineArt.vue'
+import CuisineBlock from './CuisineBlock.vue'
 
 const props = defineProps({
   place: { type: Object, required: true },
-  // When true, the card shows a button linking to the place detail page
+  // List cards: the whole card links to the place page. Without it (the Pick screen) the
+  // card is plain content.
   link: { type: Boolean, default: false },
-  ctaLabel: { type: String, default: 'Check it out' },
 })
 
-const router = useRouter()
-const art = computed(() => cuisineArt(props.place.cuisine))
-const detailRoute = computed(() => ({ name: 'place', params: { id: props.place.id } }))
-
-// Tapping anywhere on the card opens it too. The button stays the real (keyboard) link.
-function onCardClick(event) {
-  if (!props.link || event.target.closest('a, button')) return
-  router.push(detailRoute.value)
+const copy = {
+  open: 'Open',
+  closed: 'Closed',
+  rating: (rating, count) => `Rated ${rating} from ${count} Google reviews`,
 }
+
+const detailRoute = computed(() => ({ name: 'place', params: { id: props.place.id } }))
 </script>
 
 <template>
-  <article class="place-card" :class="{ 'is-link': link }" @click="onCardClick">
+  <article class="place-card" :class="{ 'is-link': link }">
+    <!-- The cuisine as a big sticker label; decorative, the tag below says the same -->
     <div class="art">
-      <CuisineArt :kind="art.kind" class="art-image" />
-      <span class="tag">{{ place.cuisine }}</span>
-      <span v-if="place.openNow != null" class="status" :class="place.openNow ? 'open' : 'closed'">
-        {{ place.openNow ? 'Open' : 'Closed' }}
-      </span>
+      <CuisineBlock :place="place" />
     </div>
 
     <div class="body">
-      <!-- h2: cards sit directly under the page's h1 (Explore summary, Pick headline) -->
-      <h2 class="name">{{ place.name }}</h2>
+      <!-- h2: cards sit directly under the page's h1 (Explore summary, Pick headline).
+           In list cards the name is the one link, stretched over the whole card (.card-link::after). -->
+      <h2 class="name">
+        <RouterLink v-if="link" :to="detailRoute" class="card-link">
+          <span class="name-text">{{ place.name }}</span>
+        </RouterLink>
+        <span v-else class="name-text">{{ place.name }}</span>
+      </h2>
+
+      <p class="badges">
+        <span class="tag">{{ place.cuisine }}</span>
+        <span v-if="place.openNow != null" class="status" :class="place.openNow ? 'open' : 'closed'">
+          {{ place.openNow ? copy.open : copy.closed }}
+        </span>
+      </p>
+
       <p class="stats">
         <template v-if="place.rating != null">
-          <span class="rating" :aria-label="`Rated ${place.rating.toFixed(1)} from ${place.ratingCount} Google reviews`">
+          <span class="rating" :aria-label="copy.rating(place.rating.toFixed(1), place.ratingCount)">
             <span class="star" aria-hidden="true">★</span>{{ place.rating.toFixed(1) }}
             <span class="count" aria-hidden="true">({{ place.ratingCount.toLocaleString() }})</span>
           </span>
@@ -50,16 +57,27 @@ function onCardClick(event) {
           <span class="price">{{ formatPrice(place.priceLevel) }}</span>
         </template>
       </p>
-
-      <RouterLink v-if="link" :to="detailRoute" class="btn btn-primary btn-display btn-block cta">
-        {{ ctaLabel }}<span class="visually-hidden">: {{ place.name }}</span>
-      </RouterLink>
     </div>
+
+    <!-- Visual cue that the card opens; the link itself is the name -->
+    <span v-if="link" class="go" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <path d="M5 12h13M12 5l7 7-7 7" />
+      </svg>
+    </span>
   </article>
 </template>
 
 <style scoped>
+/* Layout (mobile-first). PlaceCardSkeleton mirrors these shapes, so change both together.
+   - list cards on phones and in the desktop list column: compact row, square block on the left
+   - everything else (tablet grid, Pick screen): vertical card, block on top, badges pinned over it */
 .place-card {
+  --art-size: 104px; /* compact block */
+  --art-height: clamp(150px, 128px + 4vw, 176px); /* vertical block */
+  --go-size: 44px;
+
+  position: relative; /* anchors the stretched link and the arrow */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -72,50 +90,110 @@ function onCardClick(event) {
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
+/* Cards in the same grid row match heights */
 .place-card.is-link {
-  cursor: pointer;
+  height: 100%;
 }
 
-/* Lift on hover (pointer devices only) */
+/* Lift with a deeper shadow on hover (pointer devices) and on keyboard focus */
 @media (hover: hover) {
   .place-card.is-link:hover {
-    transform: translate(-2px, -2px);
+    transform: translate(-3px, -3px);
     box-shadow: var(--shadow-lg);
   }
 }
 
-/* ---------- Illustration area ---------- */
+.place-card.is-link:has(.card-link:focus-visible) {
+  transform: translate(-3px, -3px);
+  box-shadow: var(--shadow-lg);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+/* ---------- Cuisine block ---------- */
 .art {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: clamp(112px, 90px + 6vw, 144px);
-  padding: clamp(0.75rem, 0.6rem + 0.6vw, 1rem);
+  /* The label keeps clear of the badges pinned over the top of the block */
+  --label-inset: 2.6rem 9% 0.9rem;
+
+  flex: none;
+  height: var(--art-height);
   border-bottom: var(--outline);
-  background-color: var(--color-accent);
-  background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 10%, transparent) 1.5px, transparent 1.7px);
-  background-size: 14px 14px;
 }
 
-
-.art-image {
-  width: auto;
-  height: 100%;
-  max-width: 120px;
-  transform: rotate(-4deg);
-  transition: transform var(--dur-pop) var(--ease-pop);
-}
-
+/* The label flips its tilt and grows a little, like a sticker being pressed down */
 @media (hover: hover) {
-  .place-card.is-link:hover .art-image {
-    transform: rotate(4deg) scale(1.08);
+  .place-card.is-link:hover .art :deep(.label) {
+    transform: rotate(calc(var(--tilt, -4deg) * -1)) scale(1.06);
   }
+}
+
+.place-card.is-link:has(.card-link:focus-visible) .art :deep(.label) {
+  transform: rotate(calc(var(--tilt, -4deg) * -1)) scale(1.06);
+}
+
+/* ---------- Text ---------- */
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0; /* lets the name clamp instead of widening the card */
+  padding: 0.85rem var(--gutter) var(--gutter);
+}
+
+.name {
+  margin: 0;
+  font-size: clamp(1.3rem, 1.15rem + 0.6vw, 1.55rem);
+  line-height: 1.1;
+}
+
+/* Long names: two lines, then an ellipsis */
+.name-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere; /* long single words wrap instead of widening the card */
+}
+
+.card-link {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+/* Stretched link: covers the whole card, so a tap anywhere opens it */
+.card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+}
+
+/* The card shows focus (above); the link's own ring would only circle the name */
+.card-link:focus-visible {
+  outline: none;
+}
+
+/* Cuisine tag and open status: pinned over the block on vertical cards */
+.badges {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  left: 0.6rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+  z-index: 1; /* above the block */
+  margin: 0;
+  pointer-events: none;
 }
 
 .tag,
 .status {
-  position: absolute;
-  top: 0.6rem;
   padding: 0.1rem 0.6rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
@@ -123,16 +201,20 @@ function onCardClick(event) {
   color: var(--color-ink);
   font-size: 0.8rem;
   font-weight: 800;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .tag {
-  left: 0.6rem;
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
   box-shadow: 2px 2px 0 var(--color-ink);
   transform: rotate(-3deg);
 }
 
 .status {
-  right: 0.6rem;
+  flex: none;
 }
 
 /* Its own green pill, so "open now" never depends on what it sits on */
@@ -149,21 +231,6 @@ function onCardClick(event) {
   color: var(--color-closed);
 }
 
-/* ---------- Text ---------- */
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.85rem var(--gutter) var(--gutter);
-}
-
-.name {
-  margin: 0;
-  font-size: clamp(1.3rem, 1.15rem + 0.6vw, 1.55rem);
-  line-height: 1.1;
-  overflow-wrap: anywhere; /* long single-word names can't widen the card */
-}
-
 .stats {
   display: flex;
   flex-wrap: wrap;
@@ -172,6 +239,11 @@ function onCardClick(event) {
   margin: 0;
   font-size: var(--text-sm);
   font-weight: 700;
+}
+
+/* Room for the arrow on the bottom line */
+.is-link .stats {
+  padding-right: calc(var(--go-size) + 0.25rem);
 }
 
 .star {
@@ -189,23 +261,95 @@ function onCardClick(event) {
   color: var(--color-primary);
 }
 
-.cta {
-  min-height: 50px;
-  font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
+/* ---------- Arrow sticker ---------- */
+.go {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  display: grid;
+  place-items: center;
+  width: var(--go-size);
+  height: var(--go-size);
+  border-radius: 50%;
+  background: var(--color-ink);
+  color: var(--color-bg);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--color-ink) 35%, transparent);
+  transform: rotate(-8deg);
+  transition: transform var(--dur-pop) var(--ease-pop);
 }
 
-/* Cards in the same grid row match heights, with their buttons lined up at the bottom */
-.place-card.is-link {
-  height: 100%;
+.go svg {
+  width: 55%;
+  height: 55%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.body {
-  flex: 1;
+@media (hover: hover) {
+  .place-card.is-link:hover .go {
+    transform: rotate(0deg) translateX(3px);
+  }
 }
 
-.stats {
-  flex: 1;
-  align-content: flex-start;
-  margin-bottom: 0.5rem;
+.place-card.is-link:has(.card-link:focus-visible) .go {
+  transform: rotate(0deg) translateX(3px);
+}
+
+/* ---------- Compact rows: list cards on phones and in the desktop list column ---------- */
+@media (max-width: 639.98px), (min-width: 1024px) {
+  .place-card.is-link {
+    --go-size: 34px;
+
+    flex-direction: row;
+    min-height: var(--art-size);
+  }
+
+  .is-link .art {
+    --label-inset: 12px;
+
+    align-self: stretch;
+    width: var(--art-size);
+    height: auto;
+    min-height: var(--art-size);
+    border-bottom: 0;
+    border-right: var(--outline);
+  }
+
+  .is-link .body {
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .is-link .name {
+    font-size: clamp(1.15rem, 1.05rem + 0.5vw, 1.3rem);
+  }
+
+  /* Badges flow under the name instead of floating over the block */
+  .is-link .badges {
+    position: static;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .is-link .tag {
+    transform: none;
+    max-width: 100%;
+  }
+
+  .is-link .go {
+    right: 0.6rem;
+    bottom: 0.6rem;
+  }
+}
+
+/* The desktop list column has room for a bigger block */
+@media (min-width: 1024px) {
+  .place-card.is-link {
+    --art-size: 124px;
+  }
 }
 </style>
