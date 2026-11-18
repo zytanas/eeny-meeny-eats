@@ -7,7 +7,7 @@ import { prefersReducedMotion, celebrate } from '@/utils/motion'
 import PlaceCard from '@/components/PlaceCard.vue'
 import MarqueeStrip from '@/components/MarqueeStrip.vue'
 import { pickMarqueeItems } from '@/content/marquee'
-import slotSvg from '@/assets/stickers/slot.svg'
+import slotSvg from '@/assets/stickers/slot.webp'
 
 const props = defineProps({
   id: { type: String, required: true },
