@@ -28,9 +28,15 @@ export function fetchNearby({ lat, lon, radiusKm }) {
 /**
  * Best match for a typed city or area: { lat, lon, label, shortLabel, alternatives }.
  * alternatives are other confident matches with the same shape (minus alternatives).
+ * near ({ lat, lon }) is where the user is now; the server prefers matches close to it.
  */
-export function geocodeArea(text) {
-  return request(`geocode?${new URLSearchParams({ text })}`)
+export function geocodeArea(text, near) {
+  const params = new URLSearchParams({ text })
+  if (near) {
+    params.set('lat', near.lat)
+    params.set('lon', near.lon)
+  }
+  return request(`geocode?${params}`)
 }
 
 /** Google star rating and rating count for one place. */

@@ -3,8 +3,13 @@ import { COUNTRY_FILTER, DUPLICATE_DISTANCE_M, PLACE_CATEGORIES, RESULT_LIMIT } 
 
 const BASE = 'https://api.geoapify.com'
 
-// Below this, a geocode match is more likely a guess than the place the user meant
-const MIN_CONFIDENCE = 0.5
+// Typed-area search (geocode). Geoapify scores every exact name match 1.0, so confidence only
+// weeds out guesses; which match wins is decided by distance and place size (see rankMatches).
+const MIN_CONFIDENCE = 0.8 // below this, a match is more likely a guess than the place the user meant
+const GEOCODE_LIMIT = 15 // 1 credit per request whatever the limit; extra results keep far exact matches as choices
+const NEARBY_KM = 30 // a match this close to the bias point beats any farther one, whatever its size
+const SAME_PLACE_M = 200 // matches this close to a better-ranked one count as the same place
+const MAX_ALTERNATIVES = 4 // "Not the right spot?" chips
 
 export class GeoapifyError extends Error {}
 
@@ -59,28 +64,50 @@ function metersBetween(a, b) {
   return Math.hypot(x, y) * 6371000
 }
 
-// Best match for a typed city/area, limited to COUNTRY_FILTER when set, plus other good
-// matches so the app can offer "Not the right spot?".
+// Best match for a typed city/area, limited to COUNTRY_FILTER when set, plus up to MAX_ALTERNATIVES
+// other places so the app can offer "Not the right spot?".
+// `near` ({ lat, lon }) is a soft bias: Geoapify ranks closer places higher but still returns far ones.
 // Returns null when no match is confident enough, so the user sees "Couldn't find that place".
-export async function geocode(text) {
-  const params = { text, limit: 5, format: 'json' }
+export async function geocode(text, near = null) {
+  const params = { text, limit: GEOCODE_LIMIT, format: 'json' }
   if (COUNTRY_FILTER) params.filter = `countrycode:${COUNTRY_FILTER}`
+  if (near) params.bias = `proximity:${near.lon},${near.lat}` // lon first; lat,lon is silently ignored
   const data = await get('/v1/geocode/search', params)
   const results = data.results ?? []
 
-  // Temporary: shows how Geoapify scores each match, so we can tune MIN_CONFIDENCE
-  console.log(`geocode "${text}":`, results.map((r) => `${r.formatted} (${r.rank?.confidence})`))
+  const confident = results.filter((r) => (r.rank?.confidence ?? 0) >= MIN_CONFIDENCE)
+  const kept = []
+  for (const r of rankMatches(confident, near)) {
+    if (!kept.some((k) => metersBetween(k, r) <= SAME_PLACE_M)) kept.push(r)
+  }
 
-  const seen = new Set()
-  const matches = results
-    .filter((r) => (r.rank?.confidence ?? 0) >= MIN_CONFIDENCE)
-    .sort((a, b) => b.rank.confidence - a.rank.confidence)
-    .map(toMatch)
-    .filter((m) => !seen.has(m.shortLabel) && seen.add(m.shortLabel))
-
-  if (!matches.length) return null
-  const [best, ...alternatives] = matches
+  if (!kept.length) return null
+  const [best, ...alternatives] = kept.slice(0, MAX_ALTERNATIVES + 1).map(toMatch)
   return { ...best, alternatives }
+}
+
+// Best first: matches within NEARBY_KM of `near` beat far ones ("Katipunan" -> the QC one, not a
+// town in Aklan). Then bigger places beat smaller ones ("Baguio" -> the city, not a barangay in
+// Tayabas; "Japan" -> a street, not the embassy). Then the closest wins.
+// Array.sort is stable, so full ties keep Geoapify's own order.
+function rankMatches(results, near) {
+  return results
+    .map((r) => {
+      const km = near ? metersBetween(near, r) / 1000 : 0
+      return { r, km, nearby: near && km <= NEARBY_KM ? 1 : 0, size: placeSize(r) }
+    })
+    .sort((a, b) => b.nearby - a.nearby || b.size - a.size || a.km - b.km)
+    .map((m) => m.r)
+}
+
+// Bigger number = bigger place
+const SIZE_BY_TYPE = { country: 3, state: 3, county: 3, city: 3, postcode: 2, district: 2, suburb: 2, street: 1 }
+
+// Geoapify also types barangays as "city", but a barangay sits inside a different city
+// ("Baguio" in Tayabas), while a real city or municipality is its own city.
+function placeSize(r) {
+  if (r.result_type === 'city' && r.city && r.city !== r.name) return SIZE_BY_TYPE.suburb
+  return SIZE_BY_TYPE[r.result_type] ?? 0 // amenity, building (businesses, landmarks), unknown
 }
 
 // "Japan, Bonuan Binloc, Dagupan, 2400 Pangasinan, Philippines" -> "Japan, Dagupan, Pangasinan"

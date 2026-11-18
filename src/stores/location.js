@@ -87,7 +87,8 @@ export const useLocationStore = defineStore('location', {
       this.status = 'geocoding'
       this.error = null
       try {
-        const result = await geocodeArea(text)
+        // center is the current location, or METRO_MANILA before we have one
+        const result = await geocodeArea(text, this.center)
         const found = result.shortLabel || text
         this.coords = { lat: result.lat, lon: result.lon }
         this.area = found

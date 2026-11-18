@@ -22,6 +22,8 @@ const copy = {
   viewToggle: 'Show as',
   list: 'List',
   map: 'Map',
+  otherMatches: 'Not the right spot?',
+  dismissMatches: 'Dismiss other matches',
 }
 
 const router = useRouter()
@@ -67,6 +69,18 @@ async function setMobileView(view) {
 
 function openLocationPanel() {
   locationPanel.value.open(changeLocationBtn.value)
+}
+
+// Picking or dismissing removes the chips, including the focused button, so hand focus to the
+// location button instead of dropping it back to the page
+function chooseAlternative(alt) {
+  location.chooseAlternative(alt)
+  changeLocationBtn.value?.focus()
+}
+
+function dismissAlternatives() {
+  location.alternatives = []
+  changeLocationBtn.value?.focus()
 }
 
 function openPlace(id) {
@@ -129,17 +143,21 @@ function openPlace(id) {
               </button>
             </span>
           </h1>
+          <!-- One sideways-scrolling row, so the chips never push the place list down -->
           <div v-if="location.alternatives.length" class="did-you-mean">
-            <span class="dym-label">Not the right spot?</span>
-            <button
-              v-for="alt in location.alternatives"
-              :key="alt.shortLabel"
-              type="button"
-              class="dym-chip"
-              @click="location.chooseAlternative(alt)"
-            >
-              {{ alt.shortLabel }}
-            </button>
+            <span id="dym-label" class="dym-label">{{ copy.otherMatches }}</span>
+            <div class="dym-row">
+              <ul class="dym-chips" aria-labelledby="dym-label">
+                <li v-for="alt in location.alternatives" :key="`${alt.lat},${alt.lon}`">
+                  <button type="button" class="dym-chip" @click="chooseAlternative(alt)">
+                    {{ alt.shortLabel }}
+                  </button>
+                </li>
+              </ul>
+              <button type="button" class="dym-dismiss" :aria-label="copy.dismissMatches" @click="dismissAlternatives">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
           </div>
           <LocationPanel ref="locationPanel" @open-change="panelOpen = $event" />
           <p class="visually-hidden" aria-live="polite">{{ announcement }}</p>
@@ -287,8 +305,10 @@ function openPlace(id) {
   display: block;
 }
 
+/* Smaller than the count line, so long found names ("Japan-Japan, Naval, Biliran") stay on 1-2 lines */
 .summary-where {
   margin-top: 0.15em;
+  font-size: 0.75em;
 }
 
 /* Count as a strawberry sticker */
@@ -327,19 +347,41 @@ function openPlace(id) {
 /* Other matches for the typed area, as stickers like .change-tag */
 .did-you-mean {
   flex: 1 1 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
+  min-width: 0; /* lets the chip row scroll instead of widening the page */
   margin-top: -0.25rem;
 }
 
 .dym-label {
+  display: block;
+  margin-bottom: 0.2rem;
   font-weight: 800;
   font-size: 0.875rem;
 }
 
+.dym-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dym-chips {
+  display: flex;
+  flex: 1;
+  gap: 0.4rem;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 4px 5px 3px; /* room for the sticker shadow and hover tilt inside the scroll box */
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.dym-chips li {
+  flex: none;
+}
+
 .dym-chip {
+  white-space: nowrap;
   min-height: max(44px, var(--tap-min)); /* --tap-min is only 40px on mouse screens */
   padding: 0.3em 0.8em;
   border: 2px solid var(--color-ink);
@@ -366,6 +408,29 @@ function openPlace(id) {
 .dym-chip:active {
   transform: translate(2px, 2px) scale(0.96);
   box-shadow: none;
+}
+
+.dym-dismiss {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid var(--color-ink);
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dym-dismiss:active {
+  transform: scale(0.92);
 }
 
 .change-tag {

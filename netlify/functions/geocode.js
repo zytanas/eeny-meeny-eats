@@ -1,16 +1,22 @@
-// GET /api/geocode?text=..
+// GET /api/geocode?text=..&lat=..&lon=..
 //
 // Turns a typed city or area into coordinates with Geoapify, limited to COUNTRY_FILTER.
+// lat/lon (optional) is where the user is now; matches near it are preferred.
 import { geocode, GeoapifyError } from '../lib/geoapify.js'
 
 export default async (req) => {
-  const text = new URL(req.url).searchParams.get('text')?.trim()
+  const url = new URL(req.url)
+  const text = url.searchParams.get('text')?.trim()
   if (!text || text.length > 200) {
     return Response.json({ error: 'text is required (max 200 characters)' }, { status: 400 })
   }
+  const lat = parseFloat(url.searchParams.get('lat'))
+  const lon = parseFloat(url.searchParams.get('lon'))
+  const valid = Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180
+  const near = valid ? { lat, lon } : null // no or bad point: search without a bias
 
   try {
-    const result = await geocode(text)
+    const result = await geocode(text, near)
     if (!result) {
       return Response.json({ error: "Couldn't find that place. Try a nearby city or landmark." }, { status: 404 })
     }
