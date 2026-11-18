@@ -91,3 +91,7 @@ function isAllowedOrigin(req) {
   const { hostname } = parsed
   return hostname === NETLIFY_SITE_HOST || hostname.endsWith(`--${NETLIFY_SITE_HOST}`)
 }
+
+// Only reachable here (a custom path turns off /.netlify/functions/report). The /api/* rate limit
+// rule in netlify.toml covers it.
+export const config = { path: '/api/report' }

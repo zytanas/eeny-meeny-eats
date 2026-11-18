@@ -8,8 +8,10 @@
 //
 // Rate limited to 20 requests a minute per IP (see `config` at the bottom). Setting `path` here
 // also means this function is only reachable at /api/nearby, not at /.netlify/functions/nearby,
-// so the limit can't be dodged through the default URL. Netlify matches functions before
-// redirects, so the /api/* redirect in netlify.toml doesn't get in the way.
+// so the limit can't be dodged through the default URL. Requests here also count toward the
+// /api/* limit in netlify.toml. Don't add a rewrite to /.netlify/functions/* for /api paths:
+// in production a forced rewrite runs before function paths and sends the request to the
+// disabled default URL, which returns a 404.
 //
 // Fast food is left out: fast-food chains always, and places still labelled plain "Fast Food"
 // once their names have been checked for a cuisine (lib/placeFilter.js). Places tagged fast food

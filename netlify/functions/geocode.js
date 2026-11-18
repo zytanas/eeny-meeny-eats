@@ -36,3 +36,7 @@ export default async (req) => {
     return Response.json({ error: message, userMessage: err.userMessage ?? undefined }, { status: 502 })
   }
 }
+
+// Only reachable here (a custom path turns off /.netlify/functions/geocode). The /api/* rate limit
+// rule in netlify.toml covers it.
+export const config = { path: '/api/geocode' }
