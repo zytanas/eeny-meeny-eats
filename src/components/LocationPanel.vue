@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, nextTick, onBeforeUnmount } from 'vue'
 import { useLocationStore } from '@/stores/location'
 import { MEDIA } from '@/utils/breakpoints'
 import LocationForm from './LocationForm.vue'
+import AreaChips from './AreaChips.vue'
 
 // "Change location" panel for Explore: a dropdown under the trigger on wider screens,
 // a bottom sheet on phones. Built on a native modal <dialog>, which gives us a focus trap,
@@ -24,11 +25,15 @@ const dialogEl = ref(null)
 const position = ref(null)
 let trigger = null
 
-function open(triggerEl) {
+async function open(triggerEl) {
   trigger = triggerEl
   location.clearError()
   placeUnderTrigger()
   dialogEl.value.showModal()
+  // The dropdown class and width are on now, so the panel's real height can be measured
+  // (this runs before the next paint, so the panel never shows in the wrong spot)
+  await nextTick()
+  makeRoomBelowTrigger()
   window.addEventListener('resize', placeUnderTrigger)
   window.addEventListener('scroll', placeUnderTrigger, { passive: true })
   emit('open-change', true)
@@ -59,13 +64,34 @@ function placeUnderTrigger() {
   }
   const rect = trigger.getBoundingClientRect()
   const maxLeft = window.innerWidth - PANEL_WIDTH - 16
-  // On short screens (landscape tablets) keep the panel's top on screen; its height is capped in CSS
-  const top = Math.round(Math.max(16, Math.min(rect.bottom + 10, window.innerHeight - 260)))
+  // If the whole panel still can't fit under the trigger, lift it so it does (covering the trigger).
+  // Taller than the screen: top at 16px, and its height is capped (it scrolls inside).
+  const height = dialogEl.value?.open ? panelHeight() : 244
+  const top = Math.round(Math.max(16, Math.min(rect.bottom + 10, window.innerHeight - height - 16)))
   position.value = {
     top: `${top}px`,
     maxHeight: `calc(100dvh - ${top + 16}px)`,
     left: `${Math.round(Math.max(16, Math.min(rect.left, maxLeft)))}px`,
   }
+}
+
+// Full height of the panel's content plus the dialog's border, whatever max-height it has now
+function panelHeight() {
+  const dialog = dialogEl.value
+  return dialog.firstElementChild.offsetHeight + (dialog.offsetHeight - dialog.clientHeight)
+}
+
+// Tablets: the trigger sits below the map, so a tall panel (with recent chips) would run off the
+// bottom. Scroll the page up just enough that the whole panel fits under its trigger, stopping
+// before the trigger slides under the sticky header. placeUnderTrigger handles what's left over.
+function makeRoomBelowTrigger() {
+  if (!position.value) return
+  const rect = trigger.getBoundingClientRect()
+  const overflow = rect.bottom + 10 + panelHeight() + 16 - window.innerHeight
+  const headerBottom = document.querySelector('.app-header')?.getBoundingClientRect().bottom ?? 0
+  const room = rect.top - headerBottom - 12
+  if (overflow > 0 && room > 0) window.scrollBy({ top: Math.min(overflow, room), behavior: 'instant' })
+  placeUnderTrigger()
 }
 
 onBeforeUnmount(() => {
@@ -96,7 +122,12 @@ defineExpose({ open, close })
       <p class="current">
         {{ copy.current }}: <strong>{{ location.label }}</strong>
       </p>
-      <LocationForm id-prefix="panel" compact @located="close" />
+      <LocationForm id-prefix="panel" compact @located="close">
+        <!-- Recent searches only; a chip searches like typing, so a match closes the panel too -->
+        <template #after-input="{ search }">
+          <AreaChips :search="search" id-prefix="panel" />
+        </template>
+      </LocationForm>
     </div>
   </dialog>
 </template>

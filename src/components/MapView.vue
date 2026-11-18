@@ -302,6 +302,15 @@ function destination(center, radiusM, bearingDeg) {
   transition: transform var(--dur-fast) var(--ease-pop);
 }
 
+/* Invisible 44px tap area around the small (36px) clusters; bigger ones already clear it.
+   100% is the padding box (30px inside the 3px border), so a 36px cluster gets -7px insets. */
+.map-cluster::before {
+  content: '';
+  position: absolute;
+  inset: min(0px, calc((100% - 44px) / 2));
+  border-radius: 50%;
+}
+
 @media (hover: hover) {
   .map-cluster:hover {
     transform: scale(1.1);

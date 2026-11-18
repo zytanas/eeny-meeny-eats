@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { useLocationStore } from '@/stores/location'
 import { prefersReducedMotion } from '@/utils/motion'
 import LocationForm from '@/components/LocationForm.vue'
+import AreaChips from '@/components/AreaChips.vue'
 import chickenSvg from '@/assets/stickers/chicken.webp'
 import sodaSvg from '@/assets/stickers/soda.webp'
 import coffeeSvg from '@/assets/stickers/coffee.webp'
@@ -32,13 +33,9 @@ const copy = {
   location: {
     headline: 'Saan ka ngayon?',
     subline: "Tell us where you are and we'll find food nearby.",
-    // The form's own text (buttons, input) lives in components/LocationForm.vue
+    // The form's own text (buttons, input) lives in components/LocationForm.vue,
+    // and the Recent / Quick picks chips' text in components/AreaChips.vue
     privacyNote: "We only use your location to find food nearby. It's never saved.",
-    recentLabel: 'Recent',
-    clearRecent: 'Clear',
-    clearRecentLabel: 'Clear recent searches',
-    quickPicksLabel: 'Quick picks',
-    moreAreas: 'More areas',
     resume: (label) => `Continue exploring ${label} →`,
   },
   howItWorks: {
@@ -51,18 +48,6 @@ const copy = {
     ],
   },
 }
-
-// Area chips under the input. Tapping one searches that area right away.
-// The search covers ~2 km, so these are specific spots ("place, city"), not whole cities.
-// Each was checked to geocode to the right place. Ordered Luzon, then Visayas, then Mindanao.
-const quickPickAreas = [
-  'Tomas Morato, Quezon City', 'Legazpi Village, Makati', 'BGC, Taguig', 'Kapitolyo, Pasig',
-  'Session Road, Baguio', 'Tagaytay Rotonda', 'Urbiztondo, San Juan, La Union', 'Calle Crisologo, Vigan',
-  'IT Park, Cebu City', 'Smallville, Iloilo City', 'Lacson Street, Bacolod',
-  'Lanang, Davao City', 'Divisoria, Cagayan de Oro',
-]
-// Only the first few show until "More areas" is tapped, so the card stays short
-const QUICK_PICKS_SHOWN = 6
 
 const howItWorksSteps = copy.howItWorks.steps.map((step, i) => ({
   ...step,
@@ -150,25 +135,6 @@ function playIntro() {
         '+=0.1',
       )
   }, introEl.value)
-}
-
-// The Clear button disappears with the recents, so hand focus to the first quick pick
-const quickPicksEl = ref(null)
-async function clearRecent() {
-  location.clearRecentAreas()
-  await nextTick()
-  quickPicksEl.value?.querySelector('button')?.focus()
-}
-
-// "More areas" removes itself, so focus moves to the first newly shown chip
-const showAllAreas = ref(false)
-const visibleQuickPicks = computed(() =>
-  showAllAreas.value ? quickPickAreas : quickPickAreas.slice(0, QUICK_PICKS_SHOWN),
-)
-async function expandQuickPicks() {
-  showAllAreas.value = true
-  await nextTick()
-  quickPicksEl.value?.querySelectorAll('.chips button')[QUICK_PICKS_SHOWN]?.focus()
 }
 
 function continueToLocation() {
@@ -276,50 +242,7 @@ function continueToLocation() {
               </template>
 
               <template #after-input="{ search }">
-                <div
-                  v-if="location.recentAreas.length"
-                  class="chip-group"
-                  role="group"
-                  aria-labelledby="home-recent-label"
-                >
-                  <div class="chip-group-head">
-                    <span id="home-recent-label" class="chip-group-label">{{ copy.location.recentLabel }}</span>
-                    <button
-                      type="button"
-                      class="clear-link"
-                      :aria-label="copy.location.clearRecentLabel"
-                      @click="clearRecent"
-                    >
-                      {{ copy.location.clearRecent }}
-                    </button>
-                  </div>
-                  <ul class="chips">
-                    <li v-for="area in location.recentAreas" :key="area">
-                      <button type="button" class="chip chip--recent" @click="search(area)">
-                        <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M12 7v5l3.5 2" />
-                        </svg>
-                        {{ area }}
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-
-                <div ref="quickPicksEl" class="chip-group" role="group" aria-labelledby="home-picks-label">
-                  <span id="home-picks-label" class="chip-group-label">{{ copy.location.quickPicksLabel }}</span>
-                  <ul class="chips">
-                    <li v-for="area in visibleQuickPicks" :key="area">
-                      <button type="button" class="chip" @click="search(area)">{{ area }}</button>
-                    </li>
-                    <li v-if="!showAllAreas">
-                      <button type="button" class="chip chip--more" @click="expandQuickPicks">
-                        {{ copy.location.moreAreas }}
-                        <span class="chip-more-icon" aria-hidden="true">+</span>
-                      </button>
-                    </li>
-                  </ul>
-                </div>
+                <AreaChips :search="search" id-prefix="home" quick-picks />
               </template>
             </LocationForm>
           </div>
@@ -731,110 +654,6 @@ function continueToLocation() {
   font-size: var(--text-sm);
   color: var(--color-muted);
   line-height: 1.4;
-}
-
-/* ---------- Area chips (recent + quick picks) ---------- */
-.chip-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.15rem;
-}
-
-.chip-group-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.chip-group-label {
-  font-size: var(--text-sm);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-muted);
-}
-
-/* Small text link, with an invisible padded box so it's still easy to tap */
-.clear-link {
-  margin: -0.6rem -0.5rem;
-  padding: 0.6rem 0.5rem;
-  border: 0;
-  background: none;
-  color: var(--color-link);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-/* Wrap onto more lines rather than scroll sideways */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: var(--tap-min);
-  padding: 0 0.9rem;
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-card);
-  box-shadow: 2px 2px 0 var(--color-ink);
-  font-size: var(--text-sm);
-  font-weight: 800;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    transform var(--dur-press) ease-out,
-    box-shadow var(--dur-press) ease-out,
-    background-color var(--dur-fast);
-}
-
-.chip:hover {
-  background: var(--color-accent);
-}
-
-.chip:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0 0 0 var(--color-ink);
-}
-
-/* Recent searches: strawberry tint with a clock, so they read as "yours" */
-.chip--recent {
-  background: var(--color-hero);
-}
-
-/* Dashed outline and a "+" so it reads as "show more", not another area */
-.chip--more {
-  border-style: dashed;
-  background: transparent;
-  box-shadow: none;
-}
-
-.chip-more-icon {
-  font-size: 1.15em;
-  line-height: 1;
-}
-
-.chip-icon {
-  flex-shrink: 0;
-  width: 1.1em;
-  height: 1.1em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 /* ---------- How it works ---------- */

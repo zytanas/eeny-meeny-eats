@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLocationStore } from '@/stores/location'
 import { usePlacesStore } from '@/stores/places'
@@ -13,6 +13,7 @@ import FilterSheet from '@/components/FilterSheet.vue'
 import SortControl from '@/components/SortControl.vue'
 import RandomizerButton from '@/components/RandomizerButton.vue'
 import LocationPanel from '@/components/LocationPanel.vue'
+import PlaceCardSkeleton from '@/components/PlaceCardSkeleton.vue'
 
 // Layout by breakpoint:
 //   mobile   list OR map, picked with the sticky List/Map toggle (list first)
@@ -24,7 +25,14 @@ const copy = {
   map: 'Map',
   otherMatches: 'Not the right spot?',
   dismissMatches: 'Dismiss other matches',
+  loading: 'Loading nearby places…',
+  near: 'near',
+  of: 'of',
+  change: 'Change',
 }
+
+// Enough placeholder cards to fill the visible list; CSS shows 2 on mobile, 4 on tablet, 3 on desktop
+const SKELETON_COUNT = 4
 
 const router = useRouter()
 const location = useLocationStore()
@@ -65,6 +73,7 @@ async function setMobileView(view) {
   mobileView.value = view
   await nextTick()
   mapView.value?.invalidateSize()
+  updateDymFade() // the chip row can't be measured while the list is hidden
 }
 
 function openLocationPanel() {
@@ -76,6 +85,29 @@ function openLocationPanel() {
 function chooseAlternative(alt) {
   location.chooseAlternative(alt)
   changeLocationBtn.value?.focus()
+}
+
+// "Not the right spot?" row: on touch screens it scrolls sideways, with a fade on the right
+// while there's more to see. (On mouse screens it wraps, never overflows, so no fade.)
+const dymChips = ref(null)
+const dymHasMore = ref(false)
+function updateDymFade() {
+  const el = dymChips.value
+  dymHasMore.value = !!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+watch(() => location.alternatives, async () => {
+  await nextTick()
+  updateDymFade()
+})
+onMounted(() => {
+  updateDymFade()
+  window.addEventListener('resize', updateDymFade)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', updateDymFade))
+
+// Tabbing to a chip scrolls it fully into view, clear of the fade (scroll-padding in CSS)
+function revealDymChip(event) {
+  event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 }
 
 function dismissAlternatives() {
@@ -121,11 +153,13 @@ function openPlace(id) {
       <section class="explore-panel">
         <div class="toolbar">
           <h1 class="summary display">
-            <!-- Two lines: "183 places within 2 km" / "of <location> ✎ Change". "of" sits inside the
-                 button because a button always wraps as one box; outside, it would strand on its own line.
-                 The nbsp keeps "2 km" together. -->
+            <!-- Two lines: "183 places within 2 km" / "of <location> ✎ Change". The second line never
+                 wraps: the name truncates with an ellipsis between "of" and the Change tag. The full name
+                 stays in the DOM (so screen readers read all of it) and in the title for mouse users. -->
             <span class="summary-line">
-              <span class="summary-count">{{ places.filteredPlaces.length }}</span>
+              <!-- No stale count while loading; a placeholder pill holds its place -->
+              <span v-if="places.loading" class="summary-count summary-count--skeleton" aria-hidden="true"></span>
+              <span v-else class="summary-count">{{ places.filteredPlaces.length }}</span>
               {{ places.radiusKm ? `places within ${places.radiusKm} km` : 'places' }}
             </span>
             <span class="summary-line summary-where">
@@ -136,10 +170,10 @@ function openPlace(id) {
                 aria-haspopup="dialog"
                 aria-controls="location-panel"
                 :aria-expanded="panelOpen"
+                :title="location.label"
                 @click="openLocationPanel"
               >
-                {{ places.radiusKm ? 'of' : 'near' }}
-                <span class="location-name">{{ location.label }}</span>{{ ' ' }}<span class="change-tag"><span aria-hidden="true">✎</span> Change</span>
+                <span class="where-of">{{ places.radiusKm ? copy.of : copy.near }}</span>{{ ' ' }}<span class="location-name">{{ location.label }}</span>{{ ' ' }}<span class="change-tag"><span aria-hidden="true">✎</span> {{ copy.change }}</span>
               </button>
             </span>
           </h1>
@@ -147,10 +181,17 @@ function openPlace(id) {
           <div v-if="location.alternatives.length" class="did-you-mean">
             <span id="dym-label" class="dym-label">{{ copy.otherMatches }}</span>
             <div class="dym-row">
-              <ul class="dym-chips" aria-labelledby="dym-label">
+              <ul
+                ref="dymChips"
+                class="dym-chips"
+                :class="{ 'has-more': dymHasMore }"
+                aria-labelledby="dym-label"
+                @scroll.passive="updateDymFade"
+                @focusin="revealDymChip"
+              >
                 <li v-for="alt in location.alternatives" :key="`${alt.lat},${alt.lon}`">
-                  <button type="button" class="dym-chip" @click="chooseAlternative(alt)">
-                    {{ alt.shortLabel }}
+                  <button type="button" class="dym-chip" :title="alt.shortLabel" @click="chooseAlternative(alt)">
+                    <span class="dym-chip-text">{{ alt.shortLabel }}</span>
                   </button>
                 </li>
               </ul>
@@ -180,14 +221,21 @@ function openPlace(id) {
         </Transition>
         <FilterSheet v-if="!isDesktop" id="filter-panel" v-model:open="showFilters" />
 
-        <Transition name="fade" mode="out-in">
-          <p v-if="places.loading" key="loading" class="muted status">Loading nearby places…</p>
-          <p v-else-if="places.error" key="error" class="error status" role="alert">
-            {{ places.error }}
-            <button class="btn btn-secondary" @click="places.loadNearby({ force: true })">Retry</button>
-          </p>
-          <PlaceList v-else key="list" :places="places.filteredPlaces" />
-        </Transition>
+        <div class="results" :aria-busy="places.loading ? 'true' : 'false'">
+          <Transition name="fade" mode="out-in">
+            <div v-if="places.loading" key="loading">
+              <p class="visually-hidden" role="status">{{ copy.loading }}</p>
+              <ul class="skeleton-list" aria-hidden="true">
+                <li v-for="n in SKELETON_COUNT" :key="n"><PlaceCardSkeleton /></li>
+              </ul>
+            </div>
+            <p v-else-if="places.error" key="error" class="error status" role="alert">
+              {{ places.error }}
+              <button class="btn btn-secondary" @click="places.loadNearby({ force: true })">Retry</button>
+            </p>
+            <PlaceList v-else key="list" :places="places.filteredPlaces" />
+          </Transition>
+        </div>
       </section>
 
       <div class="randomizer-dock">
@@ -296,16 +344,16 @@ function openPlace(id) {
 
 .summary {
   flex: 1 1 100%;
+  min-width: 0; /* lets the location line shrink and truncate instead of widening the toolbar */
   margin: 0 0 0.25rem;
   font-size: clamp(1.6rem, 1.3rem + 1.5vw, 2.2rem);
-  overflow-wrap: anywhere; /* long area names can't push the page sideways */
 }
 
 .summary-line {
   display: block;
 }
 
-/* Smaller than the count line, so long found names ("Japan-Japan, Naval, Biliran") stay on 1-2 lines */
+/* Smaller than the count line; long names ("Legazpi Village, Makati, Metro Manila") truncate */
 .summary-where {
   margin-top: 0.15em;
   font-size: 0.75em;
@@ -324,21 +372,58 @@ function openPlace(id) {
   transform: rotate(-3deg);
 }
 
-/* The location name is a button that opens the "change location" panel.
-   Vertical padding on an inline box grows the tap area without moving the text. */
+/* The same sticker, empty, while the count loads */
+.summary-count--skeleton {
+  width: 2.2em;
+  height: 1em;
+  vertical-align: -0.1em;
+  background: color-mix(in srgb, var(--color-primary) 35%, var(--color-card));
+  animation: count-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes count-pulse {
+  to { background: color-mix(in srgb, var(--color-primary) 15%, var(--color-card)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-count--skeleton {
+    animation: none;
+  }
+}
+
+/* "of <name> ✎ Change" is one button, on one line, that opens the "change location" panel.
+   "of" and the tag keep their size; only the name shrinks, with an ellipsis. */
 .change-location {
-  display: inline;
-  padding: 0.4em 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0;
   border: 0;
   background: none;
+  color: inherit;
   font: inherit;
   text-align: left;
   text-transform: inherit;
+  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
+.where-of {
+  flex: none;
+}
+
 .location-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Room inside the clipped box for the offset underline */
+  padding-bottom: 10px;
+  margin-bottom: -10px;
   text-decoration: underline;
   text-decoration-thickness: 4px;
   text-decoration-color: var(--color-primary);
@@ -374,14 +459,26 @@ function openPlace(id) {
   list-style: none;
   overflow-x: auto;
   scrollbar-width: thin;
+  scroll-padding-inline: 3px 2.5rem; /* a chip tabbed into view clears the fade */
+}
+
+/* More to scroll: fade the right edge so the cut-off chip reads as "keep going" */
+.dym-chips.has-more {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
 }
 
 .dym-chips li {
   flex: none;
+  min-width: 0;
 }
 
+/* Capped width, so a long name ("Petron TPLEX - KM 134 Southbound, …") never fills the row
+   and the next chip always peeks in; the full name is in the title */
 .dym-chip {
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  max-width: min(16rem, 62vw);
   min-height: max(44px, var(--tap-min)); /* --tap-min is only 40px on mouse screens */
   padding: 0.3em 0.8em;
   border: 2px solid var(--color-ink);
@@ -397,6 +494,41 @@ function openPlace(id) {
   transition:
     transform var(--dur-press) ease-out,
     box-shadow var(--dur-press) ease-out;
+}
+
+.dym-chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Touch screens: swipe sideways, no scrollbar (the fade shows there's more) */
+@media (hover: none) {
+  .dym-chips {
+    scrollbar-width: none;
+  }
+
+  .dym-chips::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mouse screens: no sideways scrolling; the chips wrap onto rows, the × stays top right */
+@media (hover: hover) and (pointer: fine) {
+  .dym-row {
+    align-items: flex-start;
+  }
+
+  .dym-chips {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .dym-chips.has-more {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
 }
 
 @media (hover: hover) {
@@ -434,10 +566,11 @@ function openPlace(id) {
 }
 
 .change-tag {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 0.25em;
-  margin-left: 0.4em;
+  margin-left: 0.15em;
   padding: 0.15em 0.6em;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
@@ -448,7 +581,6 @@ function openPlace(id) {
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
-  vertical-align: 0.3em;
   white-space: nowrap;
   transition:
     transform var(--dur-press) ease-out,
@@ -487,6 +619,39 @@ function openPlace(id) {
   color: var(--color-ink);
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+/* Placeholder cards in the same grid as PlaceList: 2 on mobile, 4 on tablet, 3 on desktop */
+.skeleton-list {
+  display: grid;
+  gap: 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skeleton-list li:nth-child(n + 3) {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .skeleton-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .skeleton-list li:nth-child(n + 3) {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .skeleton-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .skeleton-list li:nth-child(n + 4) {
+    display: none;
+  }
 }
 
 .status {
@@ -569,6 +734,12 @@ function openPlace(id) {
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-left: var(--gutter);
+  }
+
+  /* The list column is narrow, so a smaller location line fits more of the name
+     before the ellipsis kicks in */
+  .summary-where {
+    font-size: 0.62em;
   }
 
   /* Centered at the bottom of the map, lifted clear of its attribution line */
