@@ -4,10 +4,10 @@
 // (service role on the server; RLS blocks any direct browser access).
 //
 // Spam protection:
-//   - Origin check: a request with an Origin header must come from this site's own host or a
-//     *.netlify.app site (deploy previews). Without it, another website could post reports
-//     from its visitors' browsers (a text/plain POST needs no CORS preflight, and req.json()
-//     reads it anyway). Requests without an Origin (curl, server-to-server) aren't affected;
+//   - Origin check: a request with an Origin header must come from this site's own host,
+//     https://emechos.netlify.app, or one of its deploy previews (*--emechos.netlify.app).
+//     Without it, another website could post reports from its visitors' browsers (a
+//     text/plain POST needs no CORS preflight, and req.json() reads it anyway). Requests without an Origin (curl, server-to-server) aren't affected;
 //     the rate limit covers those.
 //   - Honeypot: the form has a hidden `website` field people never see or fill. If it has a
 //     value, a bot filled it: answer 201 as if it worked, but save nothing.
@@ -73,7 +73,10 @@ export default async (req) => {
 }
 
 // No Origin header: allowed. Otherwise it must be this site's own host (whatever domain it's
-// served on, including localhost under `netlify dev`) or an https *.netlify.app site.
+// served on, including localhost under `netlify dev`), the production Netlify URL, or one of
+// its deploy previews / branch deploys (e.g. https://deploy-preview-12--emechos.netlify.app).
+const NETLIFY_SITE_HOST = 'emechos.netlify.app'
+
 function isAllowedOrigin(req) {
   const origin = req.headers.get('origin')
   if (!origin) return true
@@ -84,7 +87,7 @@ function isAllowedOrigin(req) {
     return false // includes the literal "null" origin sent from sandboxed pages
   }
   if (parsed.host === new URL(req.url).host) return true
-  // TODO: narrow to this site and its deploy previews once the Netlify site name is known:
-  // hostname === '<site>.netlify.app' || hostname.endsWith('--<site>.netlify.app')
-  return parsed.protocol === 'https:' && parsed.hostname.endsWith('.netlify.app')
+  if (parsed.protocol !== 'https:') return false
+  const { hostname } = parsed
+  return hostname === NETLIFY_SITE_HOST || hostname.endsWith(`--${NETLIFY_SITE_HOST}`)
 }
