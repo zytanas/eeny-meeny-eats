@@ -126,6 +126,18 @@ export const useLocationStore = defineStore('location', {
       }
     },
 
+    // A quick pick with preset coordinates (AreaChips): no lookup, so it's instant and costs nothing.
+    // Not added to recents: it's already one tap away, and a recent chip would geocode the label.
+    setPresetArea({ lat, lon, label }) {
+      locationVersion++ // drop any GPS name lookup still in flight
+      this.coords = { lat, lon }
+      this.area = label
+      this.alternatives = []
+      this.status = 'ready'
+      this.error = null
+      this.persist()
+    },
+
     // The user tapped one of the "Not the right spot?" choices
     chooseAlternative(match) {
       locationVersion++ // drop any GPS name lookup still in flight

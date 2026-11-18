@@ -3,12 +3,14 @@ import { ref, computed, nextTick } from 'vue'
 import { useLocationStore } from '@/stores/location'
 
 // Area chips for LocationForm's `after-input` slot: the user's recent searches and, optionally,
-// a set of quick picks. Tapping a chip runs the form's `search` straight away, so it behaves
-// exactly like typing the area (the form emits `located` when it's found).
+// a set of quick picks. A recent chip runs the form's `search` straight away, so it behaves
+// exactly like typing the area; a quick pick runs `choose` with its preset coordinates, with no
+// lookup (the form emits `located` either way).
 // Used by Home (recents + quick picks) and Explore's "change location" panel (recents only).
 const props = defineProps({
-  // The `search` function LocationForm passes to its slot
+  // The `search` and `choose` functions LocationForm passes to its slot
   search: { type: Function, required: true },
+  choose: { type: Function, default: null }, // required with quickPicks
   // Keeps label ids unique if two forms are ever on screen
   idPrefix: { type: String, default: 'location' },
   quickPicks: { type: Boolean, default: false },
@@ -24,12 +26,23 @@ const copy = {
 }
 
 // The search covers ~2 km, so these are specific spots ("place, city"), not whole cities.
-// Each was checked to geocode to the right place. Ordered Luzon, then Visayas, then Mindanao.
+// Preset central points, so tapping one is instant, uses no Geoapify credits, and can't land on
+// the wrong spot ("BGC, Taguig" geocodes to a bus stop). `label` is the chip text and becomes the
+// location's name. Ordered Luzon, then Visayas, then Mindanao.
 const quickPickAreas = [
-  'Tomas Morato, Quezon City', 'Legazpi Village, Makati', 'BGC, Taguig', 'Kapitolyo, Pasig',
-  'Session Road, Baguio', 'Tagaytay Rotonda', 'Urbiztondo, San Juan, La Union', 'Calle Crisologo, Vigan',
-  'IT Park, Cebu City', 'Smallville, Iloilo City', 'Lacson Street, Bacolod',
-  'Lanang, Davao City', 'Divisoria, Cagayan de Oro',
+  { label: 'Tomas Morato, Quezon City', lat: 14.6335, lon: 121.0345 },
+  { label: 'Legazpi Village, Makati', lat: 14.5548, lon: 121.0177 },
+  { label: 'BGC, Taguig', lat: 14.5508, lon: 121.051 },
+  { label: 'Kapitolyo, Pasig', lat: 14.5716, lon: 121.0597 },
+  { label: 'Session Road, Baguio', lat: 16.412, lon: 120.5985 },
+  { label: 'Tagaytay Rotonda', lat: 14.1063, lon: 120.9624 },
+  { label: 'Urbiztondo, San Juan, La Union', lat: 16.6715, lon: 120.3328 },
+  { label: 'Calle Crisologo, Vigan', lat: 17.5713, lon: 120.3886 },
+  { label: 'IT Park, Cebu City', lat: 10.33, lon: 123.9058 },
+  { label: 'Smallville, Iloilo City', lat: 10.709, lon: 122.549 },
+  { label: 'Lacson Street, Bacolod', lat: 10.6815, lon: 122.9553 },
+  { label: 'Lanang, Davao City', lat: 7.099, lon: 125.631 },
+  { label: 'Divisoria, Cagayan de Oro', lat: 8.4776, lon: 124.6459 },
 ]
 // Only the first few show until "More areas" is tapped, so the card stays short
 const QUICK_PICKS_SHOWN = 6
@@ -95,8 +108,8 @@ async function expandQuickPicks() {
     >
       <span :id="`${props.idPrefix}-picks-label`" class="chip-group-label">{{ copy.quickPicksLabel }}</span>
       <ul class="chips chips--fill">
-        <li v-for="area in visibleQuickPicks" :key="area">
-          <button type="button" class="chip" @click="search(area)">{{ area }}</button>
+        <li v-for="area in visibleQuickPicks" :key="area.label">
+          <button type="button" class="chip" @click="choose(area)">{{ area.label }}</button>
         </li>
         <li v-if="!showAllAreas">
           <button type="button" class="chip chip--more" @click="expandQuickPicks">

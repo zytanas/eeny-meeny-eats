@@ -47,6 +47,14 @@ async function search(text) {
     emit('located')
   }
 }
+
+// Used by quick-pick chips: a place with preset { lat, lon, label }, so no lookup is needed
+function choose(place) {
+  if (busy.value) return
+  location.setPresetArea(place)
+  area.value = ''
+  emit('located')
+}
 </script>
 
 <template>
@@ -83,8 +91,8 @@ async function search(text) {
         :aria-describedby="location.error ? `${idPrefix}-hint ${idPrefix}-error` : `${idPrefix}-hint`"
       />
       <p :id="`${idPrefix}-hint`" class="area-hint">{{ copy.areaHint(DEFAULT_DISTANCE_KM) }}</p>
-      <!-- e.g. area chips; `search` runs the lookup straight away -->
-      <slot name="after-input" :search="search" :busy="busy" />
+      <!-- e.g. area chips; `search` runs the lookup straight away, `choose` uses preset coordinates -->
+      <slot name="after-input" :search="search" :choose="choose" :busy="busy" />
       <button class="btn btn-secondary btn-block area-btn" type="submit" :disabled="!area.trim() || busy">
         <span v-if="location.status === 'geocoding'" class="spinner" aria-hidden="true"></span>
         {{ location.status === 'geocoding' ? copy.searchingArea : copy.searchArea }}

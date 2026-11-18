@@ -368,8 +368,8 @@ function onLocated() {
                 <p class="privacy-note">{{ copy.location.privacyNote }}</p>
               </template>
 
-              <template #after-input="{ search }">
-                <AreaChips :search="search" id-prefix="home" quick-picks />
+              <template #after-input="{ search, choose }">
+                <AreaChips :search="search" :choose="choose" id-prefix="home" quick-picks />
               </template>
             </LocationForm>
           </div>
