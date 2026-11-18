@@ -209,7 +209,7 @@ async function expandQuickPicks() {
   padding: 0 0.9rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   color: inherit;
   font-size: var(--text-sm);
@@ -231,7 +231,9 @@ async function expandQuickPicks() {
   box-shadow: 0 0 0 var(--color-ink);
 }
 
-/* Recent searches: strawberry tint with a clock, so they read as "yours" */
+/* Recent searches: strawberry tint with a clock, so they read as "yours".
+   The pink is only ~1.2:1 against the cream surface, so the 2px ink outline, shadow
+   and clock are what make it stand out; keep them. */
 .chip--recent {
   background: var(--color-hero);
 }

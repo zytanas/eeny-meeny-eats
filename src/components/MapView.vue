@@ -61,10 +61,10 @@ onMounted(() => {
 
   searchCircle = L.circle([props.center.lat, props.center.lon], {
     radius: 0,
-    color: cssVar('--color-primary-strong'),
+    color: cssVar('--color-primary'),
     weight: 2.5,
     dashArray: '8 6',
-    fillColor: cssVar('--color-primary'),
+    fillColor: cssVar('--color-primary-soft'),
     fillOpacity: 0.1,
     interactive: false,
   }).addTo(map)
@@ -280,7 +280,7 @@ function destination(center, radiusM, bearingDeg) {
 .map-place-pin {
   border: 3px solid var(--color-ink);
   border-radius: 50%;
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .map-place-pin.is-closed {
@@ -293,7 +293,7 @@ function destination(center, radiusM, bearingDeg) {
   place-items: center;
   border: 3px solid var(--color-ink);
   border-radius: 50%;
-  background: var(--color-primary-strong);
+  background: var(--color-primary);
   box-shadow: 2px 2px 0 var(--color-ink);
   color: var(--color-on-primary);
   font-family: var(--font-display);
@@ -346,7 +346,7 @@ function destination(center, radiusM, bearingDeg) {
   content: '';
   position: absolute;
   inset: -3px;
-  border: 3px solid var(--color-primary-strong);
+  border: 3px solid var(--color-primary);
   border-radius: 50%;
   animation: map-pulse 1.8s var(--ease-out) infinite;
 }
@@ -375,10 +375,10 @@ function destination(center, radiusM, bearingDeg) {
   position: absolute;
   transform: translate(-50%, -50%);
   padding: 0.1rem 0.5rem;
-  border: 2px solid var(--color-primary-strong);
+  border: 2px solid var(--color-primary);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
-  color: var(--color-primary-strong);
+  background: var(--color-surface);
+  color: var(--color-primary);
   font-family: var(--font-body);
   font-size: 0.75rem;
   font-weight: 800;

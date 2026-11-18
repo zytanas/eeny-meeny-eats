@@ -13,42 +13,57 @@
    Design tokens: change these to re-skin the whole app
    ========================================================================== */
 
-/* Contrast notes (WCAG 2.1 AA), "Sorbetes" palette:
-   - Ink is >= 10:1 on bg, hero, card and accent, so it's safe for any text.
-   - Ink on --color-primary is 4.56:1. Pink fills can carry ink text, never white
-     (white on primary is only ~3.1:1).
-   - Buttons with white text use --color-primary-strong (4.94:1).
-   - --color-primary-strong is also the pink for text and links on bg/card (>= 4.7:1).
-   - --color-muted is >= 4.6:1 on bg, hero, card and accent.
-   - --color-primary is ~3:1 against bg, so pink shapes always get an ink outline.
-   - --color-mint and --color-coral are block colors only: backgrounds behind food art
-     and small labels. Ink text on them passes AA (mint 8.85:1, coral 6.15:1); never put
-     white or muted text on them. They're close to bg in lightness, so always outline them. */
+/* Contrast notes (WCAG 2.2 AA), "Sorbetes" palette:
+   - Ink is >= 6:1 on every fill below (lowest: coral 6.15:1), so it's safe for any text.
+   - --color-primary: white text on it 5.6:1; as text or links 5.4:1 on bg, 4.6:1 on hero.
+   - --color-primary-soft is decorative. Ink on it is 4.56:1, white never. It's ~3:1
+     against bg, so pink shapes always get an ink outline.
+   - --color-muted is >= 5.3:1 on bg, surface, hero and info-bg.
+   - --color-success needs bg/surface (5.1:1) or success-bg (4.6:1). On --color-hero it
+     drops below 4.5:1, so "open now" and success text never sit on pink.
+   - --color-danger is 6.2:1 on danger-bg and 7.2:1 on bg/surface.
+   - Pastel fills (mint, coral, accent, hero, info, the *-bg tints) are all close to the
+     cream in lightness (1.1-2.2:1), so they always get an ink outline. Never put white or
+     muted text on mint or coral.
+   Meaning, kept separate:
+   - accent = highlights and every selected/active state (chips, toggles, tabs)
+   - danger = errors, always with a ⚠ icon. Never the CTA pink.
+   - info = calm status notes. success = confirmations and "open now". */
 :root {
-  /* Palette: strawberry and mango on warm cream, chocolate ink */
-  --color-bg: #fff9f4; /* warm cream page background */
-  --color-hero: #ffe3e8; /* soft strawberry, intro hero */
+  /* Surfaces: one cream for the page, cards, panels and inputs. Pink is Home's hero only. */
+  --color-bg: #fff9f4; /* page background */
+  --color-surface: #fff9f4; /* cards, panels, inputs; separated from bg by ink outlines */
+  --color-bg-dot: #f5e8dc; /* page halftone dots, barely darker than --color-bg */
+  --color-hero: #ffe3e8; /* soft strawberry: Home hero background and recent-area chips */
   --color-hero-dot: #f7c4cf; /* hero halftone dots, low contrast on --color-hero */
+
+  /* Ink and text */
   --color-ink: #3a2621; /* chocolate: text, outlines, hard shadows */
-  --color-primary: #ea6686; /* strawberry: decorative fills, markers, highlights */
-  --color-primary-strong: #c93a5e; /* buttons with white text, pink text and links */
-  --color-primary-strong-hover: #b02f50;
-  --color-on-primary: #ffffff; /* text on --color-primary-strong */
-  --color-accent: #ffd56b; /* mango: art areas, selected chips, small highlights */
+  --color-muted: #6f5955; /* secondary text, placeholders, metadata, "closed" */
+
+  /* Brand */
+  --color-primary: #bf2f55; /* main CTA (white text), pink text and links, focus ring */
+  --color-primary-hover: #a3264a;
+  --color-on-primary: #ffffff; /* text on --color-primary */
+  --color-primary-soft: #ea6686; /* decorative strawberry: fills, markers, headline shadow */
+  --color-accent: #ffd56b; /* mango: highlights, badges, selected and active states */
   --color-accent-hover: #ffdf8a;
   --color-mint: #8fdcb8; /* block color: behind illustrations and labels (ink text only) */
   --color-coral: #ff8a6b; /* block color: behind illustrations and labels (ink text only) */
-  --color-bg-dot: #f5e8dc; /* page halftone dots, barely darker than --color-bg */
-  --color-card: #ffffff; /* cards and panels */
-  --color-muted: #6f5955; /* secondary text, placeholders, metadata */
-  --color-success: #237a4b; /* "open now" */
   --color-rating: #9a6212; /* star ratings */
 
+  /* Status: text color + its own background. Pair them; don't mix across statuses. */
+  --color-success: #237a4b; /* "open now", confirmations */
+  --color-success-bg: #ddf5e7;
+  --color-danger: #a3201b; /* errors and invalid fields */
+  --color-danger-bg: #fbe3e1;
+  --color-info: #c9dde2; /* calm cool accent: info borders/blocks (fill only, outline it) */
+  --color-info-bg: #e8f1f3; /* info messages, ink text */
+
   /* Roles that reuse the palette */
-  --color-link: var(--color-primary-strong);
-  --color-danger: var(--color-primary-strong);
-  --color-focus: var(--color-primary-strong);
-  --color-closed: var(--color-muted); /* closed places on the map */
+  --color-link: var(--color-primary);
+  --color-focus: var(--color-primary);
+  --color-closed: var(--color-muted); /* closed places on the map and in details */
   --color-scrim: color-mix(in srgb, var(--color-ink) 45%, transparent); /* dialog backdrops */
 
   /* Type: tall condensed display + clean sans body */
@@ -233,12 +248,12 @@ select {
 
 /* Main calls to action: deep strawberry with white text (see contrast notes above) */
 .btn-primary {
-  background: var(--color-primary-strong);
+  background: var(--color-primary);
   color: var(--color-on-primary);
 }
 
 .btn-primary:not(:disabled):hover {
-  background: var(--color-primary-strong-hover);
+  background: var(--color-primary-hover);
 }
 
 .btn-highlight {
@@ -295,7 +310,7 @@ select {
 
 /* Sticker card surface */
 .sticker {
-  background: var(--color-card);
+  background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -315,9 +330,26 @@ select {
   color: var(--color-muted);
 }
 
+/* Error message box: danger text on its tint, ink outline, and a ⚠ so the meaning
+   never rests on color alone. The icon is decorative (empty alt after the slash);
+   the message itself carries role="alert". U+FE0E keeps ⚠ as text, not a yellow emoji,
+   so it takes the danger color. */
 .error {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
   font-weight: 700;
+}
+
+.error::before {
+  content: '\26A0\FE0E';
+  content: '\26A0\FE0E' / '';
+  flex: none;
 }
 
 .visually-hidden {

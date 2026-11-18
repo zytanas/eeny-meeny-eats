@@ -70,7 +70,7 @@ const extraKm = computed(() => (DISTANCE_OPTIONS.includes(places.searchRadiusKm)
   padding: 0 0.8rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   color: var(--color-ink);
   font-size: 0.9rem;
@@ -121,7 +121,7 @@ span.radius-chip {
   padding: 0.3rem 0.65rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-sm);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   font-size: 0.8rem;
   font-weight: 700;

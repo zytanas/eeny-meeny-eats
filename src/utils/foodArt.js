@@ -30,25 +30,35 @@ export const FOOD_ART = {
   taco: { src: taco, width: FOOD_ART_SIZE, height: FOOD_ART_SIZE },
 }
 
-// Cuisine label keywords -> art key. Checked top to bottom against the lowercased
-// label, so put specific words ("korean bbq") above general ones ("bbq").
-// Labels come from the API, e.g. "Korean", "Coffee Shop" -> "Cafe", "Steak House".
+// Cuisine label keywords -> art key. Labels come from the API, e.g. "Korean",
+// "Coffee Shop" -> "Cafe", "Steak House". Keywords match whole words only ("tea"
+// doesn't match "Steak House"), so list plurals separately ("taco", "tacos").
+// Rules are checked top to bottom, so put specific phrases ("korean bbq") above
+// general words ("korean").
 const CUISINE_RULES = [
-  [['samgyup', 'korean bbq', 'korean barbecue'], 'samgyupsal'],
+  [['samgyup', 'samgyupsal', 'korean bbq', 'korean barbecue'], 'samgyupsal'],
   [['korean'], 'bibimbap'],
   [['sushi', 'japanese'], 'sushi'],
-  [['vietnamese', 'pho', 'ramen', 'noodle'], 'pho'], // noodle bowls share the pho art
+  [['vietnamese', 'pho', 'ramen', 'noodle', 'noodles'], 'pho'], // noodle bowls share the pho art
 
-  [['mexican', 'taco', 'burrito', 'tex-mex', 'latin'], 'taco'],
+  [['mexican', 'taco', 'tacos', 'burrito', 'burritos', 'tex-mex', 'latin'], 'taco'],
   [['sisig', 'filipino'], 'sisig'],
   [['barbecue', 'bbq', 'grill', 'inasal', 'steak'], 'barbecue'],
   [['cafe', 'café', 'coffee', 'tea', 'milk tea', 'juice'], 'icedCoffee'],
+  // TEMPORARY until the ice cream art lands (Phase 2b): the nearest cold treat
+  [['ice cream'], 'icedCoffee'],
 ]
 
 // Place category (from the API) -> art key, used when the cuisine label has no match
 const CATEGORY_ART = {
   cafe: 'icedCoffee',
+  ice_cream: 'icedCoffee', // TEMPORARY, same as the "ice cream" rule above
 }
+
+// Whole-word match that also works for accented letters ("café"), which \b doesn't
+const wordPattern = (word) =>
+  new RegExp(String.raw`(?<![\p{L}\p{N}])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\p{L}\p{N}])`, 'u')
+const MATCHERS = CUISINE_RULES.map(([words, key]) => [words.map(wordPattern), key])
 
 // Everything else (burgers, pizza, bakeries, plain "restaurant"...) until it has its own
 // art: a bowl reads as "a meal"
@@ -57,7 +67,7 @@ const DEFAULT_ART = 'pho'
 // foodArt('Korean') -> { key: 'bibimbap', src, width, height }
 export function foodArt(cuisine = '', category = '') {
   const label = String(cuisine).toLowerCase()
-  const rule = CUISINE_RULES.find(([words]) => words.some((word) => label.includes(word)))
+  const rule = MATCHERS.find(([patterns]) => patterns.some((pattern) => pattern.test(label)))
   const key = rule?.[1] ?? CATEGORY_ART[category] ?? DEFAULT_ART
   return { key, ...FOOD_ART[key] }
 }

@@ -21,7 +21,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--color-card);
+  background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -62,12 +62,12 @@
 
 /* A soft highlight sweeps across each block */
 .bone {
-  --bone: color-mix(in srgb, var(--color-ink) 8%, var(--color-card));
+  --bone: color-mix(in srgb, var(--color-ink) 8%, var(--color-surface));
   background-color: var(--bone);
   background-image: linear-gradient(
     100deg,
     transparent 30%,
-    color-mix(in srgb, var(--color-card) 70%, transparent) 50%,
+    color-mix(in srgb, var(--color-surface) 70%, transparent) 50%,
     transparent 70%
   );
   background-size: 200% 100%;
@@ -77,7 +77,7 @@
 
 /* Mango tint, like the real card's art area */
 .art.bone {
-  --bone: color-mix(in srgb, var(--color-accent) 35%, var(--color-card));
+  --bone: color-mix(in srgb, var(--color-accent) 35%, var(--color-surface));
 }
 
 @keyframes shimmer {

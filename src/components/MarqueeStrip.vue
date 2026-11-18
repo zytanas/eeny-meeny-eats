@@ -57,7 +57,7 @@ const run = computed(() => Array.from({ length: REPEAT }, () => props.items).fla
   color: var(--color-bg);
 }
 .marquee--primary {
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
   color: var(--color-ink);
 }
 .marquee--accent {
@@ -94,7 +94,7 @@ const run = computed(() => Array.from({ length: REPEAT }, () => props.items).fla
 }
 
 .marquee--ink .marquee-dot {
-  color: var(--color-primary);
+  color: var(--color-primary-soft);
 }
 
 @keyframes marquee {

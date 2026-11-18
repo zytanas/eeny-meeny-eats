@@ -81,7 +81,7 @@ function onDialogClick(event) {
   border: var(--outline-thick);
   border-bottom: 0;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 0 -6px 0 var(--color-ink);
   color: var(--color-ink);
   overflow: hidden;
@@ -135,7 +135,7 @@ function onDialogClick(event) {
   height: 44px;
   border: var(--outline);
   border-radius: 50%;
-  background: var(--color-bg);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   font-weight: 800;
   cursor: pointer;
@@ -170,7 +170,7 @@ function onDialogClick(event) {
   flex-shrink: 0;
   padding: 0.75rem var(--pad-right) calc(0.75rem + env(safe-area-inset-bottom)) var(--pad-left);
   border-top: var(--outline);
-  background: var(--color-card);
+  background: var(--color-surface);
 }
 
 /* ---------- Side panel (tablets) ---------- */

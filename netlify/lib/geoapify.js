@@ -168,7 +168,6 @@ function httpUrl(value) {
 const CUISINE_LABELS = {
   coffee: 'Cafe',
   coffee_shop: 'Cafe',
-  hongkong: 'Hong Kong',
 }
 
 // Geoapify category -> our category and its fallback cuisine label. Checked in order, so a

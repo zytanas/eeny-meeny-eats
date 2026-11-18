@@ -136,7 +136,7 @@ defineExpose({ open, close })
 .location-panel {
   padding: 0;
   border: var(--outline-thick);
-  background: var(--color-card);
+  background: var(--color-surface);
   color: var(--color-ink);
   overflow: visible;
 }
@@ -224,7 +224,7 @@ defineExpose({ open, close })
   height: 44px;
   border: var(--outline);
   border-radius: 50%;
-  background: var(--color-bg);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   font-weight: 800;
   cursor: pointer;

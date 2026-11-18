@@ -153,7 +153,7 @@ async function search(text) {
   padding: 0 1rem;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  background: var(--color-surface);
   box-shadow: inset 3px 3px 0 color-mix(in srgb, var(--color-ink) 8%, transparent);
   font-weight: 600;
 }
@@ -170,8 +170,12 @@ async function search(text) {
   line-height: 1.4;
 }
 
+/* Invalid: a danger border and tinted fill. Focus stays a separate pink ring offset
+   outside the field, so the two never look alike even though both are reds. */
 .area-form input[aria-invalid='true'] {
   border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+  box-shadow: inset 3px 3px 0 color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
 
 .area-btn {
@@ -180,11 +184,6 @@ async function search(text) {
 
 .error {
   margin: 0;
-  padding: 0.6rem 0.8rem;
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-sm);
-  background: var(--color-accent);
-  color: var(--color-ink);
 }
 
 .spinner {

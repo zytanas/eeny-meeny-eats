@@ -85,7 +85,7 @@ onMounted(() => places.loadNearby())
 
 .detail {
   padding: clamp(1.1rem, 0.8rem + 1.5vw, 2rem);
-  background: var(--color-card);
+  background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -125,7 +125,7 @@ dl {
   padding: 0.6rem 0.75rem;
   border: 2px solid var(--color-ink);
   border-radius: 12px;
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 .stat--rating,
@@ -170,12 +170,14 @@ dd {
   -webkit-text-stroke: 1px var(--color-ink);
 }
 
+/* Success text sits on the cream stat (5.1:1), never on pink */
 .open {
   color: var(--color-success);
 }
 
+/* Closed is a state, not an error */
 .closed {
-  color: var(--color-danger);
+  color: var(--color-closed);
 }
 
 .unknown {

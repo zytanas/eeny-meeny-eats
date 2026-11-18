@@ -62,7 +62,7 @@ function onCardClick(event) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--color-card);
+  background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -118,7 +118,7 @@ function onCardClick(event) {
   padding: 0.1rem 0.6rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   color: var(--color-ink);
   font-size: 0.8rem;
   font-weight: 800;
@@ -134,7 +134,9 @@ function onCardClick(event) {
   right: 0.6rem;
 }
 
+/* Its own green pill, so "open now" never depends on what it sits on */
 .status.open {
+  background: var(--color-success-bg);
   color: var(--color-success);
 }
 
@@ -143,7 +145,7 @@ function onCardClick(event) {
 }
 
 .status.closed {
-  color: var(--color-muted);
+  color: var(--color-closed);
 }
 
 /* ---------- Text ---------- */
@@ -183,7 +185,7 @@ function onCardClick(event) {
 }
 
 .dot {
-  color: var(--color-primary-strong);
+  color: var(--color-primary);
 }
 
 .cta {

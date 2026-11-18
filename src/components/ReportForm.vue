@@ -153,7 +153,7 @@ async function send() {
   padding: var(--gutter);
   border: var(--outline);
   border-radius: var(--radius);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
 }
 
@@ -190,7 +190,7 @@ fieldset {
   padding: 0 0.9rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   font-weight: 700;
   transition:
@@ -233,7 +233,7 @@ textarea {
   padding: 0.75rem 1rem;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  background: var(--color-surface);
   font: inherit;
   font-size: max(16px, 1rem); /* 16px+ stops iOS zooming the page on focus */
   resize: vertical;
@@ -274,7 +274,8 @@ textarea::placeholder {
   padding: 0.4rem 0.9rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-accent);
+  background: var(--color-success-bg);
+  color: var(--color-success);
   font-weight: 800;
   transform: rotate(-2deg);
 }

@@ -67,7 +67,7 @@ function letterStyle(i) {
   padding: 0.1em 0.35em 0.14em;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
   color: var(--color-ink);
   box-shadow: var(--shadow-sm);
   transform: rotate(-4deg);

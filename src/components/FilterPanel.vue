@@ -82,7 +82,7 @@ const cuisineChips = computed(() => [...new Set([...places.availableCuisines, ..
   gap: 1rem;
   margin-bottom: 1rem;
   padding: var(--gutter);
-  background: var(--color-card);
+  background: var(--color-surface);
   border: var(--outline);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -114,7 +114,7 @@ legend {
   padding: 0 0.9rem;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   font-weight: 700;
   cursor: pointer;
@@ -167,7 +167,7 @@ legend {
   height: 28px;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-bg);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   transition: background-color 0.15s;
 }
@@ -181,12 +181,14 @@ legend {
   height: 20px;
   border: 2px solid var(--color-ink);
   border-radius: 50%;
-  background: var(--color-card);
+  background: var(--color-surface);
   transition: transform 0.2s var(--ease-pop);
 }
 
+/* On = accent, like every other selected state; the thumb's position and ink
+   outline show the state too */
 .toggle input:checked + .switch {
-  background: var(--color-primary);
+  background: var(--color-accent);
 }
 
 .toggle input:checked + .switch::after {

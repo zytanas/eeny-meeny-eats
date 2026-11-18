@@ -257,7 +257,7 @@ function reroll() {
   overflow: hidden;
   border: var(--outline-thick);
   border-radius: var(--radius-lg);
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
   color: var(--color-ink);
   box-shadow: var(--shadow-lg);
   cursor: pointer;

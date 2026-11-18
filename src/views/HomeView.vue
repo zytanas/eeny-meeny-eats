@@ -405,7 +405,7 @@ function onLocated() {
   font-size: clamp(2.6rem, min(13.4vw, 15dvh), 11rem);
   line-height: 0.9;
   color: var(--color-ink);
-  text-shadow: 0.045em 0.045em 0 var(--color-primary);
+  text-shadow: 0.045em 0.045em 0 var(--color-primary-soft);
 }
 
 .setup,
@@ -432,7 +432,7 @@ function onLocated() {
   padding: 0.1em 0.3em 0.12em;
   border: max(var(--outline-w-thick), 0.07em) solid var(--color-ink);
   border-radius: max(var(--radius), 0.3em);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: max(5px, 0.11em) max(5px, 0.11em) 0 var(--color-ink);
   font-size: 0.52em;
   line-height: 1;
@@ -779,7 +779,7 @@ function onLocated() {
   line-height: 1.3;
 }
 
-/* After "Bahala na!" with no location yet: a mango label saying a pick comes next.
+/* After "Bahala na!" with no location yet: a calm info label saying a pick comes next.
    Collapses to nothing when there's no message (the live region stays in the DOM). */
 .pick-note {
   margin: 0;
@@ -791,7 +791,7 @@ function onLocated() {
   padding: 0.35rem 0.8rem;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--color-accent);
+  background: var(--color-info-bg);
   box-shadow: var(--shadow-sm);
   font-weight: 800;
   line-height: 1.3;

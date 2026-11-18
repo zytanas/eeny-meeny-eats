@@ -94,9 +94,9 @@ defineProps({
 .thick { stroke-width: 6; }
 .thin { stroke-width: 3.5; }
 
-.f-primary { fill: var(--color-primary); }
+.f-primary { fill: var(--color-primary-soft); }
 .f-accent { fill: var(--color-accent); }
 .f-cream { fill: var(--color-bg); }
-.f-paper { fill: var(--color-card); }
+.f-paper { fill: var(--color-surface); }
 .f-ink { fill: var(--color-ink); }
 </style>

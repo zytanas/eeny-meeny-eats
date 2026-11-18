@@ -271,7 +271,7 @@ function openPlace(id) {
   border-bottom: var(--outline);
 }
 
-/* Segmented sticker buttons; the active one flips to ink */
+/* Segmented sticker buttons; the active one turns accent, like every selected state */
 .view-btn {
   flex: 1;
   display: inline-flex;
@@ -281,7 +281,7 @@ function openPlace(id) {
   min-height: 44px;
   border: var(--outline);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   font-family: var(--font-display);
   font-size: 1.15rem;
@@ -296,8 +296,8 @@ function openPlace(id) {
 }
 
 .view-btn[aria-pressed='true'] {
-  background: var(--color-ink);
-  color: var(--color-bg);
+  background: var(--color-accent);
+  color: var(--color-ink);
   box-shadow: 3px 3px 0 var(--color-ink);
 }
 
@@ -366,7 +366,7 @@ function openPlace(id) {
   padding: 0 0.4em;
   border: var(--outline);
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
   color: var(--color-ink);
   box-shadow: var(--shadow-sm);
   transform: rotate(-3deg);
@@ -377,12 +377,12 @@ function openPlace(id) {
   width: 2.2em;
   height: 1em;
   vertical-align: -0.1em;
-  background: color-mix(in srgb, var(--color-primary) 35%, var(--color-card));
+  background: color-mix(in srgb, var(--color-primary-soft) 35%, var(--color-surface));
   animation: count-pulse 1.2s ease-in-out infinite alternate;
 }
 
 @keyframes count-pulse {
-  to { background: color-mix(in srgb, var(--color-primary) 15%, var(--color-card)); }
+  to { background: color-mix(in srgb, var(--color-primary-soft) 15%, var(--color-surface)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -426,7 +426,7 @@ function openPlace(id) {
   margin-bottom: -10px;
   text-decoration: underline;
   text-decoration-thickness: 4px;
-  text-decoration-color: var(--color-primary);
+  text-decoration-color: var(--color-primary-soft);
   text-underline-offset: 5px;
 }
 /* Other matches for the typed area, as stickers like .change-tag */
@@ -483,7 +483,7 @@ function openPlace(id) {
   padding: 0.3em 0.8em;
   border: 2px solid var(--color-ink);
   border-radius: var(--radius-pill);
-  background: var(--color-card);
+  background: var(--color-surface);
   box-shadow: 2px 2px 0 var(--color-ink);
   color: inherit;
   font-family: var(--font-body);
@@ -604,8 +604,13 @@ function openPlace(id) {
 }
 
 .filter-toggle.is-open {
-  background: var(--color-ink);
-  color: var(--color-bg);
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+
+/* The count badge is accent too, so it flips to cream on the open (accent) toggle */
+.filter-toggle.is-open .badge {
+  background: var(--color-surface);
 }
 
 .badge {
