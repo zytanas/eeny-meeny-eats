@@ -21,7 +21,6 @@ const copy = {
     headlinePunch: "Sound familiar?",
     subline: "Explore what's near you, or let us pick for you.",
     cta: "Bahala na!",
-    ctaLocating: "Finding you…",
     ctaBusy: "Picking…",
     scrollHint: "or scroll down",
     // Decorative stickers around the headline (aria-hidden, so screen readers skip them)
@@ -178,24 +177,43 @@ function continueToLocation() {
 
 // "Bahala na!": always picks near where the user is right now, so it asks the browser for the
 // live location on every tap (even if an area was typed earlier) and picks once it's allowed.
-// If it's denied or unavailable, take the user to the location step (which shows why) and
-// pick as soon as they type an area.
+// Whatever spot gets set next leads to a pick: the live location, or a typed area or quick
+// pick. Unless location is already allowed, the location step scrolls into view straight away,
+// so the user can type an area while the browser's prompt is still waiting for an answer
+// (typing wins; the store ignores a late answer). If location is denied or unavailable, the
+// step shows why. "Finding you…" shows on the step's location button, not here.
 const picking = ref(false);
 const pickAfterLocate = ref(false);
 const locating = computed(() => location.status === "locating");
 
-const ctaText = computed(() => {
-  if (picking.value) return copy.intro.ctaBusy;
-  if (locating.value) return copy.intro.ctaLocating;
-  return copy.intro.cta;
-});
+const ctaText = computed(() => (picking.value ? copy.intro.ctaBusy : copy.intro.cta));
 
 async function bahalaNa() {
-  if (picking.value || locating.value) return;
-  if (await location.requestBrowserLocation()) return pickAndGo();
-
+  if (picking.value) return;
   pickAfterLocate.value = true;
-  continueToLocation();
+  // Already asking (e.g. tapped twice): the pending answer or a typed area will lead to a pick
+  if (locating.value) return continueToLocation();
+
+  const granted = await geolocationGranted();
+  if (!granted) continueToLocation(); // a prompt is about to show (or it's denied)
+
+  const located = await location.requestBrowserLocation();
+  if (located === null) return; // a typed area or quick pick came first; onLocated picked
+  if (located) {
+    pickAfterLocate.value = false;
+    return pickAndGo();
+  }
+  if (granted) continueToLocation(); // allowed but unavailable: show why
+}
+
+// True only when location is already allowed, so asking won't show a prompt. Browsers without
+// the Permissions API count as "not yet allowed".
+async function geolocationGranted() {
+  try {
+    return (await navigator.permissions.query({ name: "geolocation" })).state === "granted";
+  } catch {
+    return false;
+  }
 }
 
 // Falls back to Explore when there's nothing to pick from, which explains why
@@ -271,12 +289,12 @@ function onLocated() {
         <p class="intro-subline">{{ copy.intro.subline }}</p>
         <button
           class="btn btn-primary btn-display intro-cta"
-          :aria-busy="picking || locating ? 'true' : undefined"
+          :aria-busy="picking ? 'true' : undefined"
           @click="bahalaNa"
         >
           <span
             class="cta-dice"
-            :class="{ 'is-rolling': picking || locating }"
+            :class="{ 'is-rolling': picking }"
             aria-hidden="true"
             >🎲</span
           >

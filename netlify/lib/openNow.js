@@ -4,11 +4,32 @@ import OpeningHours from 'opening_hours'
 // (e.g. "Mo-Fr 08:00-20:00; Sa 10:00-14:00"). Returns null when unknown or unparseable.
 export function isOpenNow(openingHours, timeZone) {
   if (!openingHours) return null
+  const now = wallClockDate(timeZone)
   try {
-    return new OpeningHours(openingHours).getState(wallClockDate(timeZone))
+    return new OpeningHours(openingHours).getState(now)
   } catch {
-    return null
+    // The library has no holiday data for the Philippines, so any value mentioning public (PH)
+    // or school (SH) holidays throws, e.g. "Mo-Su,PH 11:00-21:00". Retry without the holiday
+    // parts: the hours are then right on every normal day, just not adjusted for holidays.
+    const withoutHolidays = stripHolidays(openingHours)
+    if (withoutHolidays === openingHours || !withoutHolidays) return null
+    try {
+      return new OpeningHours(withoutHolidays).getState(now)
+    } catch {
+      return null
+    }
   }
+}
+
+// "Mo-Su,PH 11:00-21:00; PH off" -> "Mo-Su 11:00-21:00". Drops PH/SH from day lists, and
+// drops rules that only apply on holidays.
+function stripHolidays(value) {
+  return value
+    .split(';')
+    .map((rule) => rule.replace(/\b[PS]H\s*,\s*/g, '').replace(/\s*,\s*[PS]H\b/g, ''))
+    .filter((rule) => rule.trim() && !/^\s*[PS]H\b/.test(rule))
+    .join(';')
+    .trim()
 }
 
 // opening_hours reads a Date's local fields, but functions run in UTC. Build a Date whose

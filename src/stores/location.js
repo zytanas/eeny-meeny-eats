@@ -12,6 +12,11 @@ const MAX_RECENT = 3
 // can't overwrite a newer location's name
 let locationVersion = 0
 
+// Bumped on every browser location request, and whenever the user sets a spot by hand (typed
+// area, quick pick, alternative). A location answer that arrives after that is ignored: the
+// prompt can stay open while the user types an area instead, and what they chose wins.
+let geoRequest = 0
+
 // Restore the last location so a page refresh doesn't bounce the user home
 function loadSaved() {
   try {
@@ -53,6 +58,8 @@ export const useLocationStore = defineStore('location', {
   },
 
   actions: {
+    // Resolves true once coords are set, false if denied or unavailable, and null if the user
+    // set a spot by hand while waiting (the answer, whatever it was, is then ignored).
     requestBrowserLocation() {
       if (!('geolocation' in navigator)) {
         this.status = 'denied'
@@ -60,12 +67,14 @@ export const useLocationStore = defineStore('location', {
         return Promise.resolve(false)
       }
 
+      const request = ++geoRequest
       this.status = 'locating'
       this.error = null
 
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
+            if (request !== geoRequest) return resolve(null)
             this.coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
             this.area = '' // "Your location" until nameGpsSpot() finds the street
             this.alternatives = []
@@ -75,6 +84,7 @@ export const useLocationStore = defineStore('location', {
             resolve(true)
           },
           (err) => {
+            if (request !== geoRequest) return resolve(null)
             this.status = err.code === err.PERMISSION_DENIED ? 'denied' : 'error'
             this.error =
               err.code === err.PERMISSION_DENIED
@@ -105,6 +115,7 @@ export const useLocationStore = defineStore('location', {
     // Saves the place that was actually found, not what was typed, so the header shows the truth.
     async setManualArea(area) {
       const text = area.trim()
+      geoRequest++ // the typed area wins over a location prompt still waiting for an answer
       this.status = 'geocoding'
       this.error = null
       try {
@@ -129,6 +140,7 @@ export const useLocationStore = defineStore('location', {
     // A quick pick with preset coordinates (AreaChips): no lookup, so it's instant and costs nothing.
     // Not added to recents: it's already one tap away, and a recent chip would geocode the label.
     setPresetArea({ lat, lon, label }) {
+      geoRequest++ // the quick pick wins over a location prompt still waiting for an answer
       locationVersion++ // drop any GPS name lookup still in flight
       this.coords = { lat, lon }
       this.area = label
@@ -140,6 +152,7 @@ export const useLocationStore = defineStore('location', {
 
     // The user tapped one of the "Not the right spot?" choices
     chooseAlternative(match) {
+      geoRequest++ // ignore a location prompt still waiting for an answer
       locationVersion++ // drop any GPS name lookup still in flight
       this.coords = { lat: match.lat, lon: match.lon }
       this.area = match.shortLabel

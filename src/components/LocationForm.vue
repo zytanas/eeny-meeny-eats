@@ -31,17 +31,21 @@ const copy = {
 
 const location = useLocationStore()
 const area = ref('')
-const busy = computed(() => location.status === 'locating' || location.status === 'geocoding')
+// A location request in progress only affects the location button: the prompt can sit
+// unanswered, so typing an area or tapping a chip always works meanwhile (and wins; see
+// requestBrowserLocation in the store). Only a typed-area lookup in flight blocks the form.
+const locating = computed(() => location.status === 'locating')
+const searching = computed(() => location.status === 'geocoding')
 const inputId = computed(() => `${props.idPrefix}-area`)
 
 async function useMyLocation() {
-  if (busy.value) return
+  if (locating.value || searching.value) return
   if (await location.requestBrowserLocation()) emit('located')
 }
 
 // Used by the typed input and by any area chips a parent puts in the slot
 async function search(text) {
-  if (!text.trim() || busy.value) return
+  if (!text.trim() || searching.value) return
   if (await location.setManualArea(text)) {
     area.value = ''
     emit('located')
@@ -50,7 +54,7 @@ async function search(text) {
 
 // Used by quick-pick chips: a place with preset { lat, lon, label }, so no lookup is needed
 function choose(place) {
-  if (busy.value) return
+  if (searching.value) return
   location.setPresetArea(place)
   area.value = ''
   emit('located')
@@ -62,7 +66,7 @@ function choose(place) {
     <button
       type="button"
       class="btn btn-primary btn-display btn-block locate-btn"
-      :disabled="busy"
+      :disabled="locating || searching"
       @click="useMyLocation"
     >
       <!-- An SVG, not the 📍 emoji, so it takes the button's text color -->
@@ -72,7 +76,7 @@ function choose(place) {
           d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 4.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"
         />
       </svg>
-      {{ location.status === 'locating' ? copy.locating : copy.useLocation }}
+      {{ locating ? copy.locating : copy.useLocation }}
     </button>
     <slot name="after-locate" />
 
@@ -92,10 +96,10 @@ function choose(place) {
       />
       <p :id="`${idPrefix}-hint`" class="area-hint">{{ copy.areaHint(DEFAULT_DISTANCE_KM) }}</p>
       <!-- e.g. area chips; `search` runs the lookup straight away, `choose` uses preset coordinates -->
-      <slot name="after-input" :search="search" :choose="choose" :busy="busy" />
-      <button class="btn btn-secondary btn-block area-btn" type="submit" :disabled="!area.trim() || busy">
-        <span v-if="location.status === 'geocoding'" class="spinner" aria-hidden="true"></span>
-        {{ location.status === 'geocoding' ? copy.searchingArea : copy.searchArea }}
+      <slot name="after-input" :search="search" :choose="choose" :busy="searching" />
+      <button class="btn btn-secondary btn-block area-btn" type="submit" :disabled="!area.trim() || searching">
+        <span v-if="searching" class="spinner" aria-hidden="true"></span>
+        {{ searching ? copy.searchingArea : copy.searchArea }}
       </button>
     </form>
 
