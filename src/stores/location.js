@@ -32,7 +32,8 @@ export const useLocationStore = defineStore('location', {
     const saved = loadSaved()
     return {
       coords: saved.coords ?? null, // { lat, lon }
-      area: saved.area ?? '', // typed city/area when location is denied
+      area: saved.area ?? '', // the place the search actually found, e.g. "Japan, Dagupan, Pangasinan"
+      alternatives: [], // other good matches for the last search, for "Not the right spot?"
       status: saved.coords ? 'ready' : 'idle', // idle | locating | geocoding | ready | denied | error
       error: null,
       recentAreas: loadRecent(),
@@ -61,6 +62,7 @@ export const useLocationStore = defineStore('location', {
           (pos) => {
             this.coords = { lat: pos.coords.latitude, lon: pos.coords.longitude }
             this.area = ''
+            this.alternatives = []
             this.status = 'ready'
             this.persist()
             resolve(true)
@@ -79,23 +81,36 @@ export const useLocationStore = defineStore('location', {
     },
 
     // Looks up the typed area server-side (Geoapify). Resolves true once coords are set.
+    // Saves the place that was actually found, not what was typed, so the header shows the truth.
     async setManualArea(area) {
       const text = area.trim()
       this.status = 'geocoding'
       this.error = null
       try {
-        const { lat, lon } = await geocodeArea(text)
-        this.coords = { lat, lon }
-        this.area = text
+        const result = await geocodeArea(text)
+        const found = result.shortLabel || text
+        this.coords = { lat: result.lat, lon: result.lon }
+        this.area = found
+        this.alternatives = result.alternatives ?? []
         this.status = 'ready'
         this.persist()
-        this.addRecentArea(text)
+        this.addRecentArea(found)
         return true
       } catch (err) {
         this.status = 'error'
         this.error = err.message
         return false
       }
+    },
+
+    // The user tapped one of the "Not the right spot?" choices
+    chooseAlternative(match) {
+      this.coords = { lat: match.lat, lon: match.lon }
+      this.area = match.shortLabel
+      this.alternatives = []
+      this.status = 'ready'
+      this.persist()
+      this.addRecentArea(match.shortLabel)
     },
 
     // Called when a location form opens, so an old error doesn't greet the user

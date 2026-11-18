@@ -25,7 +25,10 @@ export function fetchNearby({ lat, lon, radiusKm }) {
   return request(`nearby?${params}`)
 }
 
-/** Coordinates for a typed city or area. */
+/**
+ * Best match for a typed city or area: { lat, lon, label, shortLabel, alternatives }.
+ * alternatives are other confident matches with the same shape (minus alternatives).
+ */
 export function geocodeArea(text) {
   return request(`geocode?${new URLSearchParams({ text })}`)
 }

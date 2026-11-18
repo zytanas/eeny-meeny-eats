@@ -3,6 +3,9 @@ import { COUNTRY_FILTER, DUPLICATE_DISTANCE_M, PLACE_CATEGORIES, RESULT_LIMIT } 
 
 const BASE = 'https://api.geoapify.com'
 
+// Below this, a geocode match is more likely a guess than the place the user meant
+const MIN_CONFIDENCE = 0.5
+
 export class GeoapifyError extends Error {}
 
 function apiKey() {
@@ -56,13 +59,35 @@ function metersBetween(a, b) {
   return Math.hypot(x, y) * 6371000
 }
 
-// First match for a typed city/area, limited to COUNTRY_FILTER when set
+// Best match for a typed city/area, limited to COUNTRY_FILTER when set, plus other good
+// matches so the app can offer "Not the right spot?".
+// Returns null when no match is confident enough, so the user sees "Couldn't find that place".
 export async function geocode(text) {
-  const params = { text, limit: 1, format: 'json' }
+  const params = { text, limit: 5, format: 'json' }
   if (COUNTRY_FILTER) params.filter = `countrycode:${COUNTRY_FILTER}`
   const data = await get('/v1/geocode/search', params)
-  const r = data.results?.[0]
-  return r ? { lat: r.lat, lon: r.lon, label: r.formatted } : null
+  const results = data.results ?? []
+
+  // Temporary: shows how Geoapify scores each match, so we can tune MIN_CONFIDENCE
+  console.log(`geocode "${text}":`, results.map((r) => `${r.formatted} (${r.rank?.confidence})`))
+
+  const seen = new Set()
+  const matches = results
+    .filter((r) => (r.rank?.confidence ?? 0) >= MIN_CONFIDENCE)
+    .sort((a, b) => b.rank.confidence - a.rank.confidence)
+    .map(toMatch)
+    .filter((m) => !seen.has(m.shortLabel) && seen.add(m.shortLabel))
+
+  if (!matches.length) return null
+  const [best, ...alternatives] = matches
+  return { ...best, alternatives }
+}
+
+// "Japan, Bonuan Binloc, Dagupan, 2400 Pangasinan, Philippines" -> "Japan, Dagupan, Pangasinan"
+function toMatch(r) {
+  const parts = [r.name || r.address_line1, r.city || r.county, r.state]
+  const shortLabel = [...new Set(parts.filter(Boolean))].join(', ')
+  return { lat: r.lat, lon: r.lon, label: r.formatted, shortLabel: shortLabel || r.formatted }
 }
 
 // Geoapify feature -> the place shape the frontend uses.

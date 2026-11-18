@@ -129,6 +129,18 @@ function openPlace(id) {
               </button>
             </span>
           </h1>
+          <div v-if="location.alternatives.length" class="did-you-mean">
+            <span class="dym-label">Not the right spot?</span>
+            <button
+              v-for="alt in location.alternatives"
+              :key="alt.shortLabel"
+              type="button"
+              class="dym-chip"
+              @click="location.chooseAlternative(alt)"
+            >
+              {{ alt.shortLabel }}
+            </button>
+          </div>
           <LocationPanel ref="locationPanel" @open-change="panelOpen = $event" />
           <p class="visually-hidden" aria-live="polite">{{ announcement }}</p>
           <SortControl />
@@ -311,6 +323,49 @@ function openPlace(id) {
   text-decoration-thickness: 4px;
   text-decoration-color: var(--color-primary);
   text-underline-offset: 5px;
+}
+/* Other matches for the typed area, as stickers like .change-tag */
+.did-you-mean {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: -0.25rem;
+}
+
+.dym-label {
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+.dym-chip {
+  min-height: max(44px, var(--tap-min)); /* --tap-min is only 40px on mouse screens */
+  padding: 0.3em 0.8em;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-card);
+  box-shadow: 2px 2px 0 var(--color-ink);
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--dur-press) ease-out,
+    box-shadow var(--dur-press) ease-out;
+}
+
+@media (hover: hover) {
+  .dym-chip:hover {
+    transform: rotate(-3deg) scale(1.04);
+  }
+}
+
+.dym-chip:active {
+  transform: translate(2px, 2px) scale(0.96);
+  box-shadow: none;
 }
 
 .change-tag {
