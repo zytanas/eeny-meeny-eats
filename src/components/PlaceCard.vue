@@ -13,7 +13,6 @@ const props = defineProps({
 const copy = {
   open: 'Open',
   closed: 'Closed',
-  rating: (rating, count) => `Rated ${rating} from ${count} Google reviews`,
 }
 
 const detailRoute = computed(() => ({ name: 'place', params: { id: props.place.id } }))
@@ -44,13 +43,6 @@ const detailRoute = computed(() => ({ name: 'place', params: { id: props.place.i
       </p>
 
       <p class="stats">
-        <template v-if="place.rating != null">
-          <span class="rating" :aria-label="copy.rating(place.rating.toFixed(1), place.ratingCount)">
-            <span class="star" aria-hidden="true">★</span>{{ place.rating.toFixed(1) }}
-            <span class="count" aria-hidden="true">({{ place.ratingCount.toLocaleString() }})</span>
-          </span>
-          <span class="dot" aria-hidden="true">•</span>
-        </template>
         <span class="distance">{{ formatDistance(place.distanceKm) }}</span>
         <template v-if="place.priceLevel">
           <span class="dot" aria-hidden="true">•</span>
@@ -244,17 +236,6 @@ const detailRoute = computed(() => ({ name: 'place', params: { id: props.place.i
 /* Room for the arrow on the bottom line */
 .is-link .stats {
   padding-right: calc(var(--go-size) + 0.25rem);
-}
-
-.star {
-  margin-right: 0.15em;
-  color: var(--color-rating);
-  -webkit-text-stroke: 1.2px var(--color-ink);
-}
-
-.count {
-  font-weight: 500;
-  color: var(--color-muted);
 }
 
 .dot {

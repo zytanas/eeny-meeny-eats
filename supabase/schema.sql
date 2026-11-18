@@ -15,16 +15,6 @@ create table if not exists public.places_cache (
 
 create index if not exists places_cache_fetched_at_idx on public.places_cache (fetched_at);
 
--- Cached Google ratings per place
-create table if not exists public.ratings_cache (
-  place_id      text primary key,
-  rating        numeric(2, 1),
-  rating_count  integer,
-  fetched_at    timestamptz not null default now()
-);
-
-create index if not exists ratings_cache_fetched_at_idx on public.ratings_cache (fetched_at);
-
 -- User-submitted problem reports about a place
 create table if not exists public.reports (
   id           bigint generated always as identity primary key,
@@ -36,6 +26,5 @@ create table if not exists public.reports (
 
 create index if not exists reports_place_id_idx on public.reports (place_id);
 
-alter table public.places_cache  enable row level security;
-alter table public.ratings_cache enable row level security;
-alter table public.reports       enable row level security;
+alter table public.places_cache enable row level security;
+alter table public.reports      enable row level security;

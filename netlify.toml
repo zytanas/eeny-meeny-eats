@@ -14,12 +14,36 @@
   targetPort = 5173
   port = 8888
 
-# Friendly API path: /api/nearby -> /.netlify/functions/nearby
+# Friendly API path: /api/geocode -> /.netlify/functions/geocode
+# (nearby sets its own path, /api/nearby, in its config, and Netlify matches it before this.)
+#
+# Rate limit: the catch-all for every /api/* call, 60 a minute per IP. Netlify's Free plan
+# allows 2 rate limit rules per project: this one, and 20/min on nearby (nearby.js config).
+#
+# TEST THIS ON A DEPLOY PREVIEW. Netlify's docs don't say whether a limit on a redirect that
+# rewrites to functions actually covers those functions. To test, send about 70 requests in a
+# minute to /api/geocode?text=Manila from one machine and check that the last ones get HTTP 429
+# (it can take up to 10 seconds to kick in).
+#   - Also note this rule doesn't cover the default /.netlify/functions/<name> URLs, which
+#     skip this redirect. Only nearby is closed off there (its config sets `path`).
+#   - If it doesn't cover the functions: delete the [redirects.rate_limit] block below and
+#     spend the second rule on the report function instead. Add to netlify/functions/report.js:
+#       export const config = {
+#         path: '/api/report',
+#         rateLimit: { windowLimit: 5, windowSize: 60, aggregateBy: ['ip', 'domain'] },
+#       }
+#     geocode and reverse-geocode then have no Netlify limit; each costs 1 Geoapify credit,
+#     and Geoapify's own daily quota is the backstop.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
+
+  [redirects.rate_limit]
+    window_limit = 60
+    window_size = 60
+    aggregate_by = ["ip", "domain"]
 
 # SPA fallback so Vue Router routes (e.g. /explore, /place/123) work on refresh.
 # Must come after the /api redirect.

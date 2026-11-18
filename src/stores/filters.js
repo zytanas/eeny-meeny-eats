@@ -6,17 +6,12 @@ import { defineStore } from 'pinia'
 export const DISTANCE_OPTIONS = [1, 2, 5]
 export const DEFAULT_DISTANCE_KM = 2
 export const PRICE_LEVELS = [1, 2, 3, 4] // rendered as $ to $$$$
-export const SORT_OPTIONS = [
-  { value: 'rating', label: 'Top rated' },
-  { value: 'distance', label: 'Nearest' },
-]
 
 const defaults = () => ({
   cuisines: [], // empty = all cuisines
   maxDistanceKm: DEFAULT_DISTANCE_KM,
   priceLevels: [], // empty = any price
   openNow: false,
-  sortBy: 'distance',
 })
 
 export const useFiltersStore = defineStore('filters', {
@@ -38,9 +33,7 @@ export const useFiltersStore = defineStore('filters', {
       this.priceLevels = toggle(this.priceLevels, level)
     },
     reset() {
-      // Keep the user's sort choice; only clear filters
-      const { sortBy } = this
-      this.$patch({ ...defaults(), sortBy })
+      this.$patch(defaults())
     },
   },
 })

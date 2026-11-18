@@ -9,7 +9,10 @@ export function formatPrice(level) {
   return level ? '$'.repeat(level) : ''
 }
 
-// Opens Google Maps directions to the place (works on mobile and desktop)
-export function directionsUrl(place) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lon}`
+// OpenStreetMap directions to the place (works on mobile and desktop, no account or key).
+// `from` ({ lat, lon }, optional) fills in the start point; people can change it there.
+export function directionsUrl(place, from = null) {
+  const start = from ? `${from.lat},${from.lon}` : ''
+  const route = `${start};${place.lat},${place.lon}`
+  return `https://www.openstreetmap.org/directions?${new URLSearchParams({ route })}`
 }

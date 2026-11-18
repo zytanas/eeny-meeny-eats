@@ -4,10 +4,19 @@
 // ISO country code that typed-area searches are limited to. Set to null to search worldwide.
 export const COUNTRY_FILTER = 'ph'
 
+// Nearby searches outside this box are turned away with a friendly message. It's a rough box
+// around the Philippines (Batanes to Tawi-Tawi, Palawan and Kalayaan to Davao Oriental), so its
+// corners also take in bits of neighbouring countries. Set to null to allow searches anywhere.
+export const SEARCH_BOUNDS = { minLat: 4.4, maxLat: 21.3, minLon: 114.0, maxLon: 127.0 }
+
 // Nearby search: start at the radius the user picked (DEFAULT_RADIUS_KM matches DEFAULT_DISTANCE_KM
 // in src/stores/filters.js). If that finds fewer than MIN_RESULTS places, widen to each of
 // RADIUS_STEPS_KM in turn and stop at the first that does.
+// A requested radius is rounded to the nearest of RADIUS_OPTIONS_KM or RADIUS_STEPS_KM, so odd
+// values ("radius=1.234") can't each start their own uncached, billed search.
+// RADIUS_OPTIONS_KM must match DISTANCE_OPTIONS in src/stores/filters.js.
 export const DEFAULT_RADIUS_KM = 2
+export const RADIUS_OPTIONS_KM = [1, 2, 5]
 export const RADIUS_STEPS_KM = [5, 10]
 export const MIN_RESULTS = 15
 // Nearest first, per search. Geoapify bills per 20 results, so this is also the cost of an uncached search.

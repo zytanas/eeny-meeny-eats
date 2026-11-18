@@ -2,13 +2,13 @@
 
 A food discovery web app for exploring nearby restaurants and cafes. When you still can't decide, the randomizer picks for you.
 
-> **Status:** nearby search and typed-area geocoding use Geoapify (OpenStreetMap data), cached in Supabase. "Report a problem" saves to Supabase `reports`. Google ratings are skipped for now: `rating.js` is a mock and the rating UI stays hidden while places have no rating. Server settings (country filter, radius, result limit, cache TTL) live in `netlify/lib/config.js`.
+> **Status:** nearby search and typed-area geocoding use Geoapify (OpenStreetMap data), cached in Supabase. "Report a problem" saves to Supabase `reports`. The app uses no Google services. Server settings (country filter, search area, radius, result limit, cache TTL) live in `netlify/lib/config.js`.
 
 ## User flow
 
 1. **Share your location**, or type a city or area if you deny location access.
-2. **Explore** nearby places on a map and in a scrollable list. Filter by cuisine, distance, price, and open now, and sort by rating or distance.
-3. **Tap a place** to see its details: name, cuisine, Google star rating and count, distance, address, and a link to directions.
+2. **Explore** nearby places on a map and in a scrollable list. Filter by cuisine, distance, and open now. Places are listed nearest first.
+3. **Tap a place** to see its details: name, cuisine, distance, opening hours, address, and a link to OpenStreetMap directions.
 4. **Still can't decide?** Tap the randomizer. It picks only from places that match your current filters.
 5. **After a pick**, accept it, re-roll, or go back to exploring.
 
@@ -21,7 +21,7 @@ A food discovery web app for exploring nearby restaurants and cafes. When you st
 | PWA        | vite-plugin-pwa (installable on phones)                                  |
 | Backend    | Netlify Functions (Node.js, plain JS)                                    |
 | Database   | Supabase (Postgres) via `@supabase/supabase-js`                          |
-| Place data | Geoapify Places API (nearby search), Google Places API (New) for ratings |
+| Place data | Geoapify Places and Geocoding APIs (OpenStreetMap data)                 |
 | Hosting    | Netlify                                                                  |
 
 External APIs are called **only** from Netlify Functions, never from the browser, so API keys stay server-side.
@@ -29,17 +29,17 @@ External APIs are called **only** from Netlify Functions, never from the browser
 ## Project structure
 
 ```
-netlify/functions/   nearby.js, geocode.js, rating.js, report.js (served at /api/*)
+netlify/functions/   nearby.js, geocode.js, reverse-geocode.js, report.js (served at /api/*)
 netlify/lib/         shared server code and settings (config.js)
-public/              favicon and placeholder PWA icons
+public/              favicon and PWA icons (built from favico.svg by scripts/build-pwa-icons.mjs)
 src/
-  components/        MapView, PlaceList, PlaceCard, FilterPanel, SortControl, RandomizerButton
+  components/        MapView, PlaceList, PlaceCard, FilterPanel, RandomizerButton
   router/            route definitions
   services/api.js    frontend helpers that call /api/*
   stores/            Pinia: location, filters, places (filteredPlaces feeds the list, map, and randomizer)
   utils/format.js    display helpers
   views/             HomeView, ExploreView, PlaceView, RandomPickView
-supabase/schema.sql  starter tables: places_cache, ratings_cache, reports
+supabase/schema.sql  starter tables: places_cache, reports
 netlify.toml         build, functions, /api redirect, SPA fallback
 ```
 
@@ -64,7 +64,7 @@ Open **http://localhost:8888**. Use this port rather than Vite's 5173: `netlify 
 
 ### Environment variables
 
-Only variables prefixed with `VITE_` are bundled into the browser. `SUPABASE_SERVICE_ROLE_KEY`, `GEOAPIFY_API_KEY`, and `GOOGLE_PLACES_API_KEY` must stay server-side (Netlify Functions only). See `.env.example`.
+The app needs three variables, all read only by the Netlify Functions: `GEOAPIFY_API_KEY`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. None has a `VITE_` prefix, so none is bundled into the browser; keep it that way. See `.env.example`.
 
 ### Database
 
@@ -77,7 +77,7 @@ Create a Supabase project, then run `supabase/schema.sql` in the SQL editor. Row
    - Build command: `npm run build`
    - Publish directory: `dist`
    - Functions directory: `netlify/functions`
-3. Under **Site configuration → Environment variables**, add every variable from `.env.example`.
+3. Under **Site configuration → Environment variables**, add the three variables from `.env.example`, scoped to **Functions**, and mark the two keys as secret.
 4. Deploy. Later pushes to the main branch deploy automatically.
 
 You can also deploy from the CLI:
@@ -91,5 +91,4 @@ npx netlify deploy --build --prod   # production
 
 ## Next steps
 
-- Optional: implement `rating.js` with Google Places API (New) for ratings. Check Google's terms first: they limit caching and showing Places data on non-Google maps.
-- Replace the placeholder PWA icons and theme color.
+- Test the `/api/*` rate limit on a deploy preview (see the note in `netlify.toml`).

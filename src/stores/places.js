@@ -30,8 +30,7 @@ export const usePlacesStore = defineStore('places', {
       return [...new Set(state.places.map((p) => p.cuisine))].sort()
     },
 
-    // Rating and price aren't in the current data source, so their UI hides when missing
-    hasRatings: (state) => state.places.some((p) => p.rating != null),
+    // Price isn't in the current data source, so its UI hides when missing
     hasPrices: (state) => state.places.some((p) => p.priceLevel != null),
 
     // Radius the map draws: the one the server used, or the one just picked while its search runs
@@ -47,19 +46,15 @@ export const usePlacesStore = defineStore('places', {
     // Distance is applied by the server (see loadNearby), so it isn't filtered again here.
     filteredPlaces() {
       const f = useFiltersStore()
-      const result = this.placesWithDistance.filter(
-        (p) =>
-          (!f.cuisines.length || f.cuisines.includes(p.cuisine)) &&
-          (!f.priceLevels.length || f.priceLevels.includes(p.priceLevel)) &&
-          (!f.openNow || p.openNow),
-      )
-
-      // Unrated places sort after rated ones, then by distance
-      return result.sort((a, b) =>
-        f.sortBy === 'rating'
-          ? (b.rating ?? -1) - (a.rating ?? -1) || (b.ratingCount ?? 0) - (a.ratingCount ?? 0) || a.distanceKm - b.distanceKm
-          : a.distanceKm - b.distanceKm,
-      )
+      // Nearest first
+      return this.placesWithDistance
+        .filter(
+          (p) =>
+            (!f.cuisines.length || f.cuisines.includes(p.cuisine)) &&
+            (!f.priceLevels.length || f.priceLevels.includes(p.priceLevel)) &&
+            (!f.openNow || p.openNow),
+        )
+        .sort((a, b) => a.distanceKm - b.distanceKm)
     },
 
     getById() {

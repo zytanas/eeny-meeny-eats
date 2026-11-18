@@ -1,5 +1,5 @@
 // Frontend helpers for our Netlify Functions.
-// The browser never calls Geoapify or Google directly; API keys stay server-side.
+// The browser never calls Geoapify directly; API keys stay server-side.
 
 // What people see when a request fails. Every error thrown from here has a message that's
 // safe to show as-is; the technical detail goes to the console instead.
@@ -67,21 +67,13 @@ export function reverseGeocode({ lat, lon }) {
   return request(`reverse-geocode?${new URLSearchParams({ lat, lon })}`)
 }
 
-/** Google star rating and rating count for one place. */
-export function fetchRating(place) {
-  const params = new URLSearchParams({
-    placeId: place.id,
-    name: place.name,
-    lat: place.lat,
-    lon: place.lon,
-  })
-  return request(`rating?${params}`)
-}
-
-/** Report a problem with a place (closed, wrong info, etc.). */
-export function submitReport({ placeId, reportType, message }) {
+/**
+ * Report a problem with a place (closed, wrong info, etc.).
+ * website is the form's honeypot field: empty for people, and the server drops reports that fill it.
+ */
+export function submitReport({ placeId, reportType, message, website = '' }) {
   return request('report', {
     method: 'POST',
-    body: JSON.stringify({ placeId, reportType, message }),
+    body: JSON.stringify({ placeId, reportType, message, website }),
   })
 }

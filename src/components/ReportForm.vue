@@ -32,6 +32,8 @@ const MAX_MESSAGE = 1000
 const open = ref(false)
 const reportType = ref('')
 const message = ref('')
+// Honeypot: hidden from people, so only bots fill it. The server drops reports that have it.
+const website = ref('')
 const status = ref('idle') // idle | sending | sent | error
 const error = ref('')
 const titleEl = ref(null)
@@ -60,11 +62,17 @@ async function send() {
   status.value = 'sending'
   error.value = ''
   try {
-    await submitReport({ placeId: props.placeId, reportType: reportType.value, message: message.value })
+    await submitReport({
+      placeId: props.placeId,
+      reportType: reportType.value,
+      message: message.value,
+      website: website.value,
+    })
     status.value = 'sent'
     open.value = false
     reportType.value = ''
     message.value = ''
+    website.value = ''
   } catch (err) {
     status.value = 'error'
     error.value = err.message
@@ -110,6 +118,12 @@ async function send() {
           :required="needsMessage"
           :placeholder="copy.messagePlaceholder"
         ></textarea>
+
+        <!-- Honeypot (see `website` above): off-screen, skipped by Tab and hidden from screen readers -->
+        <div class="visually-hidden" aria-hidden="true">
+          <label for="report-website">Website</label>
+          <input id="report-website" v-model="website" type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
 
         <p v-if="status === 'error'" class="error" role="alert">{{ error }}</p>
 

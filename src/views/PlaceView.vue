@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { usePlacesStore } from '@/stores/places'
+import { useLocationStore } from '@/stores/location'
 import { formatDistance, formatPrice, directionsUrl } from '@/utils/format'
 import ReportForm from '@/components/ReportForm.vue'
 import CuisineBlock from '@/components/CuisineBlock.vue'
@@ -10,6 +11,7 @@ const props = defineProps({
 })
 
 const places = usePlacesStore()
+const location = useLocationStore() // start point for directions
 const place = computed(() => places.getById(props.id))
 
 // Direct visits / refreshes start with an empty store
@@ -33,13 +35,6 @@ onMounted(() => places.loadNearby())
           <h1>{{ place.name }}</h1>
 
           <dl>
-            <div v-if="place.rating != null" class="stat stat--rating">
-              <dt>Google rating</dt>
-              <dd>
-                <span class="star" aria-hidden="true">★</span> {{ place.rating.toFixed(1) }}
-                <span class="muted small">({{ place.ratingCount.toLocaleString() }} reviews)</span>
-              </dd>
-            </div>
             <div class="stat">
               <dt>Distance</dt>
               <dd>{{ formatDistance(place.distanceKm) }}</dd>
@@ -69,7 +64,12 @@ onMounted(() => places.loadNearby())
             Visit website ↗
           </a>
 
-          <a class="btn btn-primary btn-display btn-block directions" :href="directionsUrl(place)" target="_blank" rel="noopener">
+          <a
+            class="btn btn-primary btn-display btn-block directions"
+            :href="directionsUrl(place, location.center)"
+            target="_blank"
+            rel="noopener"
+          >
             Get directions →
           </a>
           <ReportForm :place-id="place.id" />
@@ -148,13 +148,8 @@ dl {
   background: var(--color-surface);
 }
 
-.stat--rating,
 .stat--wide {
   grid-column: 1 / -1;
-}
-
-.stat--rating {
-  background: var(--color-accent);
 }
 
 dt {
@@ -170,25 +165,12 @@ dd {
   font-weight: 700;
 }
 
-.stat--rating dd {
-  font-size: 1.4rem;
-}
-
-.small {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
 .address {
   font-size: 1rem;
   font-weight: 500;
   overflow-wrap: anywhere;
 }
 
-.star {
-  color: var(--color-rating);
-  -webkit-text-stroke: 1px var(--color-ink);
-}
 
 /* Success text sits on the cream stat (5.1:1), never on pink */
 .open {

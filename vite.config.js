@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favico.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Pick For Me',
-        short_name: 'PickForMe',
+        name: 'Eeny Meeny Eats',
+        short_name: 'Eeny Meeny',
         description: 'Explore nearby restaurants and cafes, then let the randomizer decide.',
         // Matches --color-bg in src/style.css
         theme_color: '#fff9f4',
@@ -19,12 +19,12 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         scope: '/',
-        // TODO: replace placeholder icons in public/icons/
+        // Built from public/favico.svg by scripts/build-pwa-icons.mjs (re-run it after changing the SVG)
         icons: [
           { src: '/icons/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/icons/pwa-512x512.png',
+            src: '/icons/pwa-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

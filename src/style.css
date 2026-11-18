@@ -51,7 +51,6 @@
   --color-mint: #8fdcb8;
   --color-glacier: #bae4f1; /* block color: behind illustrations and labels (ink text only) */
   --color-coral: #ff8a6b; /* block color: behind illustrations and labels (ink text only) */
-  --color-rating: #9a6212; /* star ratings */
 
   /* Status: text color + its own background. Pair them; don't mix across statuses. */
   --color-success: #237a4b; /* "open now", confirmations */

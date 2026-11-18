@@ -1,9 +1,15 @@
 // GET /api/nearby?lat=..&lon=..&radius=..&tz=..&chains=include
 //
 // Named restaurants, cafes, food courts, ice cream and bakeries near a point, from Geoapify
-// (OpenStreetMap data). `radius` is the user's pick in km (default DEFAULT_RADIUS_KM);
-// if it finds fewer than MIN_RESULTS places, the search widens through RADIUS_STEPS_KM, and the
-// response's `radiusKm` says which radius was actually used.
+// (OpenStreetMap data). `radius` is the user's pick in km (default DEFAULT_RADIUS_KM), rounded
+// to the nearest allowed radius; if it finds fewer than MIN_RESULTS places, the search widens
+// through RADIUS_STEPS_KM, and the response's `radiusKm` says which radius was actually used.
+// Points outside SEARCH_BOUNDS (the Philippines) get a 422 with a userMessage.
+//
+// Rate limited to 20 requests a minute per IP (see `config` at the bottom). Setting `path` here
+// also means this function is only reachable at /api/nearby, not at /.netlify/functions/nearby,
+// so the limit can't be dodged through the default URL. Netlify matches functions before
+// redirects, so the /api/* redirect in netlify.toml doesn't get in the way.
 //
 // Fast food is left out: fast-food chains always, and places still labelled plain "Fast Food"
 // once their names have been checked for a cuisine (lib/placeFilter.js). Places tagged fast food
@@ -23,7 +29,9 @@ import {
   DEFAULT_TIMEZONE,
   HIDE_CHAINS,
   MIN_RESULTS,
+  RADIUS_OPTIONS_KM,
   RADIUS_STEPS_KM,
+  SEARCH_BOUNDS,
 } from '../lib/config.js'
 import { keepPlaces } from '../lib/placeFilter.js'
 import { fetchPlaces, GeoapifyError } from '../lib/geoapify.js'
@@ -32,7 +40,8 @@ import { isOpenNow, isValidTimeZone } from '../lib/openNow.js'
 
 // Bump when the cached place shape or search changes, so old cache rows are ignored
 const CACHE_VERSION = 'v2'
-const MAX_RADIUS_KM = Math.max(...RADIUS_STEPS_KM)
+// Every radius a search can start from or widen to, smallest first
+const ALLOWED_RADII_KM = [...new Set([...RADIUS_OPTIONS_KM, ...RADIUS_STEPS_KM])].sort((a, b) => a - b)
 
 export default async (req) => {
   const url = new URL(req.url)
@@ -40,6 +49,15 @@ export default async (req) => {
   const lon = parseFloat(url.searchParams.get('lon'))
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
     return Response.json({ error: 'Valid lat and lon are required' }, { status: 400 })
+  }
+  if (!inSearchBounds(lat, lon)) {
+    return Response.json(
+      {
+        error: 'Point is outside SEARCH_BOUNDS',
+        userMessage: 'Eeny Meeny Eats only covers the Philippines for now. Try a spot in the Philippines.',
+      },
+      { status: 422 },
+    )
   }
   const tz = url.searchParams.get('tz')
   const timeZone = isValidTimeZone(tz) ? tz : DEFAULT_TIMEZONE
@@ -75,10 +93,29 @@ export default async (req) => {
   })
 }
 
-// Positive km up to the widest step; anything else falls back to the default
+export const config = {
+  path: '/api/nearby',
+  // Netlify's Free plan allows 2 rate limit rules per project; this is one of them.
+  // The other is on the /api/* redirect in netlify.toml.
+  rateLimit: {
+    windowLimit: 20,
+    windowSize: 60,
+    aggregateBy: ['ip', 'domain'],
+  },
+}
+
+function inSearchBounds(lat, lon) {
+  if (!SEARCH_BOUNDS) return true
+  const { minLat, maxLat, minLon, maxLon } = SEARCH_BOUNDS
+  return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon
+}
+
+// The allowed radius nearest to the requested km (ties go to the smaller one, so it's never a
+// costlier search than asked for); missing or invalid values fall back to the default
 function parseRadiusKm(value) {
   const km = parseFloat(value)
-  return Number.isFinite(km) && km > 0 ? Math.min(km, MAX_RADIUS_KM) : DEFAULT_RADIUS_KM
+  if (!Number.isFinite(km) || km <= 0) return DEFAULT_RADIUS_KM
+  return ALLOWED_RADII_KM.reduce((best, r) => (Math.abs(r - km) < Math.abs(best - km) ? r : best))
 }
 
 async function placesWithin(lat, lon, radiusKm) {

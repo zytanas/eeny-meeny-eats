@@ -10,7 +10,6 @@ import MapRadiusControl from '@/components/MapRadiusControl.vue'
 import PlaceList from '@/components/PlaceList.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import FilterSheet from '@/components/FilterSheet.vue'
-import SortControl from '@/components/SortControl.vue'
 import RandomizerButton from '@/components/RandomizerButton.vue'
 import LocationPanel from '@/components/LocationPanel.vue'
 import PlaceCardSkeleton from '@/components/PlaceCardSkeleton.vue'
@@ -216,7 +215,6 @@ function openPlace(id) {
           </div>
           <LocationPanel ref="locationPanel" @open-change="panelOpen = $event" />
           <p class="visually-hidden" aria-live="polite">{{ announcement }}</p>
-          <SortControl />
           <button
             class="btn btn-secondary filter-toggle"
             :class="{ 'is-open': showFilters }"

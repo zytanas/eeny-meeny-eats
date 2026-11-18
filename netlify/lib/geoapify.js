@@ -170,7 +170,7 @@ function toMatch(r) {
 }
 
 // Geoapify feature -> the place shape the frontend uses.
-// Ratings and price levels aren't in OpenStreetMap data, so they're null for now.
+// Price levels aren't in OpenStreetMap data, so they're null for now.
 function normalizePlace(p) {
   if (!p.name) return null // unnamed map entries aren't useful to pick from
   return {
@@ -184,8 +184,6 @@ function normalizePlace(p) {
     address: p.address_line2 || p.formatted || '',
     openingHours: p.opening_hours ?? null,
     website: httpUrl(p.website),
-    rating: null,
-    ratingCount: null,
     priceLevel: null,
   }
 }
